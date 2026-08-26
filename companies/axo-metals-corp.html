@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Axo Metals Corp. — Company Report</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    :root{--bg:#f5f6f8;--panel:#fff;--line:#e3e6ea;--ink:#1f2733;--muted:#6b7480;
+      --accent:#1f6feb;--header:#1c2534;--header-ink:#eaf0f7;}
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:-apple-system,Segoe UI,"Microsoft YaHei",Arial,sans-serif;
+      background:var(--bg);color:var(--ink);line-height:1.6;}
+    header.top{background:var(--header);color:var(--header-ink);padding:14px 22px;display:flex;
+      align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:20;}
+    header.top .cname{font-size:18px;font-weight:700;}
+    header.top .tick{background:var(--accent);color:#fff;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;}
+    header.top .meta{font-size:12px;color:#9fb0c4;}
+    header.top .wlink{color:#7fb0ff;font-size:13px;text-decoration:none;margin-left:auto;}
+    header.top .back{color:#cdd9e8;font-size:13px;text-decoration:none;margin-left:8px;}
+    .layout{display:flex;align-items:flex-start;max-width:1100px;margin:0 auto;padding:18px;}
+    nav.toc{position:sticky;top:80px;width:190px;flex:0 0 190px;align-self:flex-start;
+      background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 10px;margin-right:18px;}
+    nav.toc .tt{font-size:11px;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:4px 6px 8px;}
+    nav.toc ul{list-style:none;margin:0;padding:0;}
+    nav.toc li a{display:block;padding:6px 8px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:13px;}
+    nav.toc li a:hover{background:#eaf1fb;color:var(--accent);}
+    main{flex:1 1 auto;min-width:0;}
+    .sec{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
+    .sec-head{font-size:16px;font-weight:700;margin-bottom:10px;padding-left:12px;border-left:4px solid var(--accent);}
+    .sec-no{color:var(--accent);margin-right:8px;}
+    .sec-body{color:#2b3440;font-size:14px;}
+    .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px;}
+    .metric{background:#f3f7fd;border:1px solid #dbe7fb;border-radius:10px;padding:12px;text-align:center;}
+    .metric-label{font-size:11px;color:var(--muted);}
+    .metric-value{font-size:19px;font-weight:700;color:var(--accent);margin-top:4px;}
+    .metric-rows-card{text-align:left;}
+    .metric-rows-card .mrow{display:flex;justify-content:space-between;font-size:13px;padding:2px 4px;border-top:1px dashed #e6eefb;}
+    .metric-rows-card .mrow b{color:var(--accent);}
+    .bullets{margin:10px 0;padding:10px 14px;border-radius:8px;}
+    .bullets.hl{background:#eef6ee;} .bullets.rk{background:#fbeeec;} .bullets.ct{background:#eef3fb;}
+    .bullets-title{font-weight:700;font-size:13px;margin-bottom:6px;}
+    .bullets ul{margin:0;padding-left:18px;} .bullets li{font-size:13.5px;margin:3px 0;}
+    .bullets.plain{background:none;padding:0;}
+    .bullets.plain ul{padding-left:18px;} .bullets.plain li{font-size:14px;margin:4px 0;}
+    .sub-h{font-weight:700;font-size:13.5px;color:var(--accent);margin:12px 0 4px;}
+    .proj-list .li-row,.people-list .li-row,.ms-list .li-row{padding:6px 0;border-bottom:1px solid var(--line);font-size:14px;}
+    .tag{display:inline-block;background:#eaf1fb;color:var(--accent);font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px;}
+    .li-note{font-size:12.5px;color:var(--muted);margin-top:2px;}
+    .chart-wrap{margin:14px 0;} .chart-cap{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+    svg.chart{background:#fff;border:1px solid var(--line);border-radius:8px;width:100%;height:auto;}
+    svg.chart .cval{fill:var(--ink);font-size:11px;} svg.chart .clab{fill:var(--muted);font-size:11px;}
+    .timeline{position:relative;margin:6px 0 0 6px;padding-left:22px;}
+    .timeline:before{content:"";position:absolute;left:5px;top:4px;bottom:4px;width:2px;background:var(--accent);}
+    .tl-item{position:relative;margin-bottom:12px;}
+    .tl-dot{position:absolute;left:-22px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 0 0 2px var(--accent);}
+    .tl-date{font-size:11px;color:var(--muted);font-weight:700;}
+    .tl-body{margin-top:2px;}
+    .tl-body summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--ink);list-style:none;}
+    .tl-body summary::-webkit-details-marker{display:none;}
+    .tl-body summary:before{content:"▸ ";color:var(--accent);}
+    .tl-body[open] summary:before{content:"▾ ";}
+    .tl-sum{font-size:13px;color:#3a4452;margin:4px 0 2px;padding-left:2px;}
+    .nlink{font-size:12px;color:var(--accent);text-decoration:none;}
+    #map{height:300px;border:1px solid var(--line);border-radius:8px;}
+    .map-note{font-size:12px;color:var(--muted);padding:10px;border:1px dashed var(--line);border-radius:8px;}
+    footer.ft{background:var(--panel);border-top:1px solid var(--line);padding:14px 22px;font-size:12px;color:var(--muted);max-width:1100px;margin:0 auto;}
+    footer.ft a{color:var(--accent);text-decoration:none;}
+    @media(max-width:760px){nav.toc{display:none;}.layout{padding:10px;}}
+    </style>
+</head>
+<body>
+<header class="top">
+  <span class="cname">Axo Metals Corp.</span>
+  <span class="tick">TSX-V: TSX-V: AXO</span>
+  <span class="meta">Gold / Copper / Silver &middot; Advanced Development (San Antonio, MIA permitted, PEA underway) + Exploration (La Huerta) &middot; Mexico</span>
+  <a class="wlink" href="https://axometals.com/" target="_blank" rel="noopener">&#8599; website</a>
+  <a class="back" href="../index.html">&larr; Dashboard</a>
+</header>
+<div class="layout">
+  <nav class="toc"><div class="tt">CONTENTS</div><ul><li><a href="#summary">Executive Summary</a></li><li><a href="#map">Project Map</a></li><li><a href="#overview">Overview</a></li><li><a href="#assets">Core Assets</a></li><li><a href="#financials">Financials</a></li><li><a href="#management">Management</a></li><li><a href="#profile">Company Profile</a></li><li><a href="#news">Latest News</a></li></ul></nav>
+  <main>
+    <section id="summary" class="sec">
+      <div class="sec-head"><span class="sec-no">&#9733;</span>Executive Summary</div>
+      <div class="sec-body"><div class="metric-grid">
+<div class="metric"><div class="metric-label">Commodity</div><div class="metric-value">Au / Cu / Ag — two-asset Mexico platform</div></div>
+<div class="metric"><div class="metric-label">Exchange</div><div class="metric-value">TSX-V: AXO (renamed from Axo Copper, effective 2026-05-01)</div></div>
+<div class="metric"><div class="metric-label">Stage</div><div class="metric-value">San Antonio: brownfield restart, MIA approved, PEA due late-Q3 CY2026 / La Huerta: exploration, no MRE</div></div>
+<div class="metric metric-rows-card"><div class="metric-label">Resources (NI 43-101)</div><div class="mrow"><span>San Antonio Indicated</span><b>14.9 Mt @ 1.20 g/t Au — 576 koz Au, 1.37 Moz Ag</b></div><div class="mrow"><span>San Antonio Inferred</span><b>16.6 Mt @ 1.02 g/t Au — 544 koz Au, 1.76 Moz Ag</b></div><div class="mrow"><span>MRE effective date</span><b>2022-06-22 — audited by Micon in the 2025-11-01 report</b></div><div class="mrow"><span>Gold price assumption</span><b>US$1,750/oz — being re-run by P&amp;E for the PEA</b></div><div class="mrow"><span>La Huerta</span><b>No MRE — Item 14 &#x27;not applicable&#x27;</b></div></div>
+<div class="metric"><div class="metric-label">Cash / Working capital</div><div class="metric-value">C$36.6M cash, C$33.4M working capital @ 2026-03-31</div></div>
+<div class="metric"><div class="metric-label">Mkt cap</div><div class="metric-value">C$183.8M @ C$0.85 (2026-05-28); 216.2M shares, 260.1M fully diluted</div></div>
+</div><div class="bullets hl"><div class="bullets-title">Investment highlights</div><ul><li>San Antonio arrives with a fully built plant: a 4,000 tpd heap-leach and carbon-in-column circuit constructed in 2021, crusher, camp, 13.2 kV grid power, paved highway access and 350,000 m3/yr of water rights — restart capex should be a fraction of greenfield.</li><li>SEMARNAT approved the MIA environmental impact statement on 2026-07-27, which the company describes as the primary authorisation for construction and operation; only the routine Change of Use of Soils (CUS) step remains.</li><li>The resource carries a 2022 vintage and a US$1,750/oz gold assumption. P&amp;E is re-estimating on the same drill database with an updated gold price, so the PEA due late-Q3 CY2026 arrives with a structural tailwind rather than a headwind.</li><li>First-pass drilling is already converting waste to ore: holes SOSAP-026-013 and -015 hit above-cut-off gold inside blocks previously modelled as waste within the 2021 pit shell, and SOSAP-26-020 returned 23.6 m @ 2.13 g/t Au from surface.</li><li>La Huerta is a genuine high-grade copper discovery — bornite-chalcopyrite dykes traced ~5 km with intercepts such as 6.4 m @ 5.24% CuEq and 7.6 m @ 7.37% Cu — providing free optionality alongside the gold restart.</li></ul></div><div class="bullets rk"><div class="bullets-title">Key risks</div><ul><li>The Osisko Gold Royalties stream is the dominant economic encumbrance: 7.15% of payable gold and silver delivered at 30% of spot, booked as a C$74.3M contract liability discounted at an 18% project WACC. The June-2026 deck&#x27;s C$147.5M enterprise value ignores it entirely.</li><li>There is no PEA, PFS or FS on either asset, and no reserves. &#x27;Advanced development&#x27; rests on a mineral resource whose effective date is 2022-06-22.</li><li>Total liabilities of C$93.6M against C$80.9M of equity — C$74.3M stream plus C$19.3M asset retirement obligation, both inherited with the acquisition.</li><li>Exploration spend is capitalised into a C$127.5M resource-property balance, so the C$4.5M accumulated deficit understates cash burned; any future impairment would land in one lump and is not comparable with peers who expense exploration.</li><li>Leadership is capital-markets weighted (ex-analyst CEO, securities-lawyer executive chair) with no mine-operating executive disclosed — a gap for a company that intends to restart a mine, compounded by 28.75M warrants struck at C$1.00 above the C$0.85 share price.</li></ul></div><div class="bullets ct"><div class="bullets-title">Near-term catalysts</div><ul><li>San Antonio PEA from P&amp;E Mining Consultants, including a re-estimated resource at an updated gold price, expected late-Q3 calendar 2026.</li><li>CUS (Change of Use of Soils) approval, which the company expects before year-end 2026 and which gates mining at Sapuchi, Golfo de Oro and California.</li><li>Balance of the 30,000 m drill programme — 25,000 m at Sapuchi for confidence upgrade and waste-to-ore conversion, plus 5,000 m of resource-expansion drilling.</li><li>Maiden drilling at the El Tigre zone (1,500 m x 500 m footprint outside the 2021 pit) after channels returned 68.6 m @ 1.11 g/t and 5.4 m @ 6.24 g/t Au.</li><li>Continued La Huerta Phase II results at depth below Las Marias, working toward a maiden La Huerta resource estimate.</li></ul></div></div>
+    </section>
+    <section id="map" class="sec">
+      <div class="sec-head"><span class="sec-no">&bull;</span>Project Map</div>
+      <div class="sec-body"><div id="map"></div></div>
+    </section>
+    <section id="overview" class="sec"><div class="sec-head"><span class="sec-no">1</span>Overview</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Axo Metals Corp. (renamed from Axo Copper Corp. effective 2026-05-01, ticker unchanged) is a Halifax-headquartered explorer-developer with two Mexican assets and a 30 June fiscal year-end.</li><li>The company IPO&#x27;d on the TSX-V in June 2025 as a single-asset copper explorer, then transformed itself in January 2026 by acquiring the past-producing San Antonio gold project in Sonora from Osisko Development.</li><li>The acquisition was funded and de-risked in quick succession: a bought deal that escalated from C$25M to C$35M to a final C$40.25M closed 2026-02-19, leaving C$36.6M of cash at 2026-03-31.</li><li>San Antonio is now the value driver — a brownfield restart with a 2021-built 4,000 tpd heap-leach/CIC plant, an approved MIA, and a PEA in progress. La Huerta is the exploration call option.</li><li>Strategy is explicitly staged: use existing infrastructure to return San Antonio to gold production at low capex, while drilling to grow both the gold resource and the La Huerta copper discovery.</li></ul></div><div class="sub-h">How the two assets differ</div><div class="bullets plain"><div class="bullets-title"></div><ul><li>San Antonio: 43 concessions over 11,338 ha, five deposits, ~85,000 m of historical drilling across 584 holes, a NI 43-101 resource, and a permitted plant — but a 2022-vintage estimate and no economic study.</li><li>La Huerta: ~11,331 ha optioned under the La Gallina Rights Option Agreement (1,000,000 shares issued annually), high-grade copper dykes over ~5 km of strike, and explicitly no mineral resource — Item 14 of the January 2025 technical report reads &#x27;not applicable&#x27;.</li><li>Both sit in established Mexican mining states (Sonora, Jalisco) with the board deliberately including two Mexican nationals, one of whom is Director General of CAMIMEX, the Mexican Mining Chamber.</li></ul></div><div class="sub-h">What the market is actually pricing</div><div class="bullets plain"><div class="bullets-title"></div><ul><li>At C$183.8M market cap the equity is valued on ~1.12 Moz of Au resource plus the La Huerta discovery, with no study-level economics available.</li><li>The June 2026 deck computes enterprise value as market cap less cash (C$147.5M), which excludes the C$74.3M stream liability and C$19.3M ARO. Adjusted for those, the economic EV is materially higher.</li><li>The PEA is therefore the single most important disclosure event: it will convert the story from asset-quality assertion into modelled cash flow, and will reset the resource to a current gold price.</li></ul></div></div></section>
+    <section id="assets" class="sec"><div class="sec-head"><span class="sec-no">2</span>Core Assets</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>San Antonio (Sonora, ~160 km from Hermosillo) — NI 43-101 technical report dated and effective 2025-11-01, filed on SEDAR+ 2026-01-27, by William J. Lewis P.Geo. and Richard Gowans P.Eng. of Micon International with Rodrigo Calles-Montijo CPG of Servicios Geologicos IMEx.</li><li>Critically, the resource inside that report retains a 2022-06-22 effective date — Micon audited and validated the Talisker/Micon 2022 estimate rather than re-estimating it.</li><li>In-pit constrained Indicated: 14.9 Mt @ 1.20 g/t Au and 2.9 g/t Ag = 576 koz Au and 1.37 Moz Ag, split oxide 2.7 Mt @ 0.89 g/t, transition 1.8 Mt @ 1.02 g/t, sulphide 10.4 Mt @ 1.31 g/t.</li><li>In-pit constrained Inferred: 16.6 Mt @ 1.02 g/t Au and 3.3 g/t Ag = 544 koz Au and 1.76 Moz Ag, split oxide 4.6 Mt @ 0.74 g/t, transition 2.1 Mt @ 0.90 g/t, sulphide 9.8 Mt @ 1.18 g/t.</li><li>By deposit, over 90% of the gold sits in three bodies: Golfo de Oro (262 koz Ind / 254 koz Inf), Sapuchi (162 / 208) and California (153 / 58); High Life adds 22 koz Inferred and Calvario 2 koz Inferred.</li><li>Estimation parameters worth flagging: US$1,750/oz gold, cut-offs of 0.27 g/t Au in oxide (70% recovery) and 0.44 g/t in transition and fresh rock (90% recovery), mining US$2.95/t, processing US$4/t oxide and US$13/t transition-sulphide, G&amp;A US$2.50/t, CAD:USD 1.3, Datamine ordinary kriging on 10 x 10 x 5 m blocks with a 0.2 g/t indicator shell.</li><li>Historic Sapuchi underground voids were depleted from the model with a 5 m buffer; the drill database spans 1994-2021 at 25-100 m spacing.</li><li>The report states plainly that no PEA, PFS or FS has been completed to support economic viability of any portion of the resource.</li><li>Site history: Luz del Cobre SX/EW copper operation 2012-2018 produced ~19 kt of cathode copper; from November 2021 to June 2023, 1.1 Mt of stockpile @ 0.58 g/t Au was heap-leached for 13.9 koz Au at 74% recovery.</li><li>La Huerta (Jalisco) — technical report effective 2025-01-24 by William Stone P.Geo., Brian Ray P.Geo. and Eugene Puritch P.Eng. of P&amp;E. Items 14 through 22 are all &#x27;not applicable&#x27;: no resource, no reserve, no economics. The report recommends a two-phase drill programme toward a maiden estimate.</li><li>La Huerta geology: bornite and chalcopyrite in intrusive-related dykes cutting andesite, traced ~5 km at surface, with alteration halos up to 30 m wide; drilling to date is shallow and concentrated within 1 km of the Las Marias historic workings.</li></ul></div><div class="proj-list">
+<div class='li-row'><b>San Antonio — Golfo de Oro</b><div class="li-note">Ind 5.7 Mt @ 1.44 g/t = 262 koz Au; Inf 6.4 Mt @ 1.24 g/t = 254 koz Au — largest gold pod</div></div>
+<div class='li-row'><b>San Antonio — Sapuchi</b><div class="li-note">Ind 5.4 Mt @ 0.93 g/t = 162 koz; Inf 7.6 Mt @ 0.85 g/t = 208 koz; oxide-rich with favourable topography; 2026 focus of 25,000 m infill</div></div>
+<div class='li-row'><b>San Antonio — California</b><div class="li-note">Ind 3.9 Mt @ 1.22 g/t = 153 koz; Inf 1.6 Mt @ 1.10 g/t = 58 koz; sulphide-dominant</div></div>
+<div class='li-row'><b>San Antonio — High Life &amp; Calvario</b><div class="li-note">High Life 0.8 Mt @ 0.83 g/t = 22 koz Inf; Calvario 0.1 Mt @ 0.53 g/t = 2 koz Inf</div></div>
+<div class='li-row'><b>San Antonio — El Tigre</b><div class="li-note">1,500 x 500 m footprint outside the 2021 pit; channels 68.6 m @ 1.11 g/t (incl. 12.2 m @ 4.00 g/t) and 5.4 m @ 6.24 g/t Au</div></div>
+<div class='li-row'><b>La Huerta — Las Marias / La Huerta Trend</b><div class="li-note">Phase I 7.6 m @ 7.37% Cu, 3.7 m @ 13.45% Cu; Phase II 6.4 m @ 5.24% CuEq, 13.15 m @ 2.89% Cu; ~5 km trend, ~11,331 ha optioned</div></div>
+</div><div class="chart-wrap"><div class="chart-cap">Contained metal by project</div><svg viewBox="0 0 680 300" width="100%" class="chart">
+<line x1="55" y1="20" x2="55" y2="244" stroke="#e3e6ea"/>
+<line x1="55" y1="244" x2="660" y2="244" stroke="#e3e6ea"/>
+<rect x="80.7" y="20.0" width="47.9" height="224.0" rx="3" fill="#1f6feb"/>
+<text x="105.7" y="15.0" text-anchor="middle" class="cval">576</text>
+<text x="105.7" y="258" text-anchor="middle" class="clab">Indicated 576 koz</text>
+<rect x="130.6" y="32.4" width="47.9" height="211.6" rx="3" fill="#27ae60"/>
+<text x="155.6" y="27.4" text-anchor="middle" class="cval">544</text>
+<text x="155.6" y="258" text-anchor="middle" class="clab">Inferred 544 koz</text>
+<text x="130.6" y="276" text-anchor="middle" class="clab" font-weight="700">San Antonio — Total (koz Au)</text>
+<rect x="232.0" y="142.1" width="47.9" height="101.9" rx="3" fill="#1f6feb"/>
+<text x="256.9" y="137.1" text-anchor="middle" class="cval">262</text>
+<text x="256.9" y="258" text-anchor="middle" class="clab">Indicated 262 koz</text>
+<rect x="281.9" y="145.2" width="47.9" height="98.8" rx="3" fill="#27ae60"/>
+<text x="306.8" y="140.2" text-anchor="middle" class="cval">254</text>
+<text x="306.8" y="258" text-anchor="middle" class="clab">Inferred 254 koz</text>
+<text x="281.9" y="276" text-anchor="middle" class="clab" font-weight="700">Golfo de Oro (koz Au)</text>
+<rect x="383.2" y="181.0" width="47.9" height="63.0" rx="3" fill="#1f6feb"/>
+<text x="408.2" y="176.0" text-anchor="middle" class="cval">162</text>
+<text x="408.2" y="258" text-anchor="middle" class="clab">Indicated 162 koz</text>
+<rect x="433.1" y="163.1" width="47.9" height="80.9" rx="3" fill="#27ae60"/>
+<text x="458.1" y="158.1" text-anchor="middle" class="cval">208</text>
+<text x="458.1" y="258" text-anchor="middle" class="clab">Inferred 208 koz</text>
+<text x="433.1" y="276" text-anchor="middle" class="clab" font-weight="700">Sapuchi (koz Au)</text>
+<rect x="534.5" y="184.5" width="47.9" height="59.5" rx="3" fill="#1f6feb"/>
+<text x="559.4" y="179.5" text-anchor="middle" class="cval">153</text>
+<text x="559.4" y="258" text-anchor="middle" class="clab">Indicated 153 koz</text>
+<rect x="584.4" y="221.4" width="47.9" height="22.6" rx="3" fill="#27ae60"/>
+<text x="609.3" y="216.4" text-anchor="middle" class="cval">58</text>
+<text x="609.3" y="258" text-anchor="middle" class="clab">Inferred 58 koz</text>
+<text x="584.4" y="276" text-anchor="middle" class="clab" font-weight="700">California (koz Au)</text>
+</svg></div></div></section>
+    <section id="financials" class="sec"><div class="sec-head"><span class="sec-no">3</span>Financials &amp;amp; Capital Structure</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Fiscal year ends 30 June; figures below are the unaudited nine months to 2026-03-31 versus the 2025-06-30 year-end, in Canadian dollars.</li><li>Cash rose to C$36,644,210 from C$10,037,047, and working capital stands at C$33.4M — funded by the C$40.25M bought deal that closed 2026-02-19 (57,500,000 units, net proceeds C$37,121,246).</li><li>Total assets jumped to C$179,404,744 from C$25,479,513, driven by resource properties of C$127,530,638 (from C$15,035,903) and C$13,675,871 of property and equipment acquired with San Antonio.</li><li>Total liabilities are C$93,612,722 versus C$1,438,293 a year earlier: a C$74,288,750 stream contract liability and a C$19,323,972 asset retirement obligation, both inherited in the acquisition, plus C$4,865,967 of payables.</li><li>The stream liability was initially recognised at C$72,015,813 — the present value of net future gold and silver stream obligations discounted at 18%, the project&#x27;s risk-adjusted WACC — and is carried subsequently at amortised cost.</li><li>Shareholders&#x27; equity is C$80,926,055 and the accumulated deficit only C$4,529,026, because exploration is capitalised rather than expensed; the nine-month net loss was C$2,654,463 (C$0.02/share) versus C$1,423,776 for all of FY2025.</li><li>Shares outstanding reached 216,227,444 at 2026-03-31 from 130,295,233, reflecting 57.5M offering units, 22,981,091 acquisition consideration shares, 3,544,091 contingent consideration shares, 907,029 warrant exercises and 1,000,000 La Gallina option shares.</li><li>Capital structure per the June 2026 deck: 3.5M options, 38.9M warrants (362,397 @ C$0.40; 9,755,156 @ C$0.70; 28,750,000 @ C$1.00), 1.5M DSUs, for 260.1M fully diluted; the C$1.00 tranche is currently out of the money against a C$0.85 share price.</li><li>Note the ownership chart below is a proxy built from disclosed share-issuance sources, not a shareholder register — no percentage register was disclosed in the reviewed filings.</li></ul></div><div class="chart-wrap"><div class="chart-cap">Shareholder structure</div><svg viewBox="0 0 385 210" width="100%" class="chart donut">
+<circle cx="105" cy="105" r="72" fill="none" stroke="#eef2f7" stroke-width="22"/>
+<circle cx="105" cy="105" r="72" fill="none" stroke="#1f6feb" stroke-width="22" stroke-dasharray="271.4 181.0" stroke-dashoffset="0.0" transform="rotate(-90 105 105)"/>
+<circle cx="105" cy="105" r="72" fill="none" stroke="#27ae60" stroke-width="22" stroke-dasharray="122.1 330.2" stroke-dashoffset="-271.4" transform="rotate(-90 105 105)"/>
+<circle cx="105" cy="105" r="72" fill="none" stroke="#e67e22" stroke-width="22" stroke-dasharray="31.7 420.7" stroke-dashoffset="-393.6" transform="rotate(-90 105 105)"/>
+<circle cx="105" cy="105" r="72" fill="none" stroke="#8e44ad" stroke-width="22" stroke-dasharray="18.1 434.3" stroke-dashoffset="-425.2" transform="rotate(-90 105 105)"/>
+<circle cx="105" cy="105" r="72" fill="none" stroke="#16a085" stroke-width="22" stroke-dasharray="9.0 443.3" stroke-dashoffset="-443.3" transform="rotate(-90 105 105)"/>
+<text x="105" y="101" text-anchor="middle" class="clab" font-size="13" font-weight="700">Ownership</text>
+<text x="105" y="119" text-anchor="middle" class="cval" font-size="15">100%</text>
+<rect x="232" y="30" width="11" height="11" rx="2" fill="#1f6feb"/>
+<text x="250" y="40" class="clab">Pre-Feb-2026 holders 60%</text>
+<rect x="232" y="52" width="11" height="11" rx="2" fill="#27ae60"/>
+<text x="250" y="62" class="clab">Feb 2026 offering 27%</text>
+<rect x="232" y="74" width="11" height="11" rx="2" fill="#e67e22"/>
+<text x="250" y="84" class="clab">Osisko Development 7%</text>
+<rect x="232" y="96" width="11" height="11" rx="2" fill="#8e44ad"/>
+<text x="250" y="106" class="clab">Osisko Gold Royalties 4%</text>
+<rect x="232" y="118" width="11" height="11" rx="2" fill="#16a085"/>
+<text x="250" y="128" class="clab">ODV contingent shares 2%</text>
+</svg></div></div></section>
+    <section id="management" class="sec"><div class="sec-head"><span class="sec-no">4</span>Management &amp;amp; Board</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>The executive team is built for transactions and capital markets rather than mine operations — a strength in the acquisition phase now being tested by a restart mandate.</li><li>President &amp; CEO Jonathan Egilo was most recently a Director and equity research analyst at a major Canadian bank and holds a mining engineering degree from Queen&#x27;s University.</li><li>Executive Chair Glenn Jessome is a securities lawyer with 25 years in resource capital markets, founding shareholder of Silver Tiger Metals and GoGold Resources, and a member of the TSXV National Advisory Committee.</li><li>CFO and Corporate Secretary Keith Abriel is a CPA and CFA with 25 years of experience, including CFO of DHX Media (now WildBrain) and several public resource companies.</li><li>Mexican access is deliberately institutionalised on the board: Karen Flores is Director General of CAMIMEX, the Mexican Mining Chamber, and previously headed corporate and government relations for Agnico Eagle; Lila Maria Bensojo-Arras is a corporate lawyer at EC Rubio.</li><li>Technical execution in-country rests with senior geologists Ramon Luna (25+ years in Mexico) and Jose Carlos Flores (15+ years), with Charles Spath P.Geo. acting as the company&#x27;s non-independent Qualified Person.</li><li>Notable gap: no mine-operating executive (general manager, COO or VP Operations) is disclosed for a company guiding toward a gold restart.</li></ul></div><div class="people-list">
+<div class='li-row'><b>Jonathan Egilo</b> <span class="tag">President, CEO &amp; Director — ex-Director, equity research analyst at a major Canadian bank; B.A.Sc. Mining Eng., Queen&#x27;s</span></div>
+<div class='li-row'><b>Glenn Jessome</b> <span class="tag">Executive Chair &amp; Director — securities lawyer; founding shareholder Silver Tiger and GoGold; TSXV National Advisory Committee</span></div>
+<div class='li-row'><b>Keith Abriel</b> <span class="tag">CFO &amp; Corporate Secretary — CPA, CFA; ex-CFO DHX Media (WildBrain)</span></div>
+<div class='li-row'><b>Karen Flores</b> <span class="tag">Director — Director General, CAMIMEX; ex-Head of Corporate &amp; Gov&#x27;t Relations, Agnico Eagle</span></div>
+<div class='li-row'><b>Lila Maria Bensojo-Arras</b> <span class="tag">Director — Mexican corporate lawyer, EC Rubio</span></div>
+<div class='li-row'><b>Doug Reid</b> <span class="tag">Director — KPMG partner 1994-2022, led Atlantic Canada practice</span></div>
+<div class='li-row'><b>Ramon Luna</b> <span class="tag">Senior Geologist — 25+ years discovery, development and mining in Mexico</span></div>
+<div class='li-row'><b>Jose Carlos Flores</b> <span class="tag">Senior Geologist — 15+ years Mexican exploration and mining</span></div>
+<div class='li-row'><b>Charles Spath, P.Geo.</b> <span class="tag">Qualified Person (non-independent)</span></div>
+</div></div></section>
+    <section id="profile" class="sec"><div class="sec-head"><span class="sec-no">5</span>Company Profile</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Halifax, Nova Scotia head office; TSX-V listed under AXO; 30 June fiscal year-end; renamed from Axo Copper Corp. to Axo Metals Corp. effective 2026-05-01 following an 87% pivot in asset mix.</li><li>The company&#x27;s arc is unusually compressed: IPO June 2025, La Huerta Phase II drilling through 2025, San Antonio acquisition announced November 2025 and closed January 2026, C$40.25M financing February 2026, MIA approval July 2026.</li><li>Consideration for San Antonio was share-heavy and milestone-deferred rather than cash: 15,305,536 shares to Osisko Development (~9.99% of basic shares at the time) plus 70% of any Mexican VAT refunds and US$2M each on feasibility study and first gold pour.</li><li>In parallel, Osisko Gold Royalties amended the existing stream for 7,652,768 shares (~4.99%): payable gold and silver cut from 15.0% to 7.15% and the transfer price raised from 15% to 30% of spot, with up to US$6M of milestones payable in gold at 50, 100 and 150 koz of production.</li><li>Both Osisko entities took 12-month lock-ups, gave 24-month voting support, and hold anti-dilution rights on the company&#x27;s first US$10M financing.</li></ul></div><div class="ms-list">
+<div class='li-row'><b>2012-2018</b> &mdash; Luz del Cobre SX/EW copper operation at San Antonio produces ~19 kt cathode copper (prior owners)</div>
+<div class='li-row'><b>2021</b> &mdash; Osisko Development drills 177 holes / 27,870 m and builds the 4,000 tpd heap-leach and CIC plant</div>
+<div class='li-row'><b>2021-11 to 2023-06</b> &mdash; 1.1 Mt of stockpile @ 0.58 g/t Au heap-leached for 13.9 koz Au at 74% recovery</div>
+<div class='li-row'><b>2025-01-24</b> &mdash; La Huerta technical report effective date — no mineral resource estimated (Item 14 not applicable)</div>
+<div class='li-row'><b>2025-06-04</b> &mdash; Completes initial public offering on the TSX-V</div>
+<div class='li-row'><b>2025-06-05</b> &mdash; Initiates 15,000 m Phase II drill programme at La Huerta; second rig tests La Huerta South, ~3 km from Las Marias</div>
+<div class='li-row'><b>2025-09-18</b> &mdash; LHCC-25-045 returns 6.4 m @ 5.24% CuEq within 13.2 m @ 3.08% CuEq</div>
+<div class='li-row'><b>2025-11-01</b> &mdash; San Antonio NI 43-101 technical report effective date (Micon / IMEx); MRE effective date remains 2022-06-22</div>
+<div class='li-row'><b>2025-11-24</b> &mdash; Announces acquisition of the past-producing San Antonio gold project from Osisko Development</div>
+<div class='li-row'><b>2026-01-27</b> &mdash; Acquisition closes; San Antonio technical report filed on SEDAR+</div>
+<div class='li-row'><b>2026-02-19</b> &mdash; Closes C$40,250,000 bought deal including full over-allotment exercise (57.5M units, net C$37.1M)</div>
+<div class='li-row'><b>2026-04-27</b> &mdash; Special meeting approves name change; Axo Metals Corp. effective 2026-05-01, ticker unchanged</div>
+<div class='li-row'><b>2026-05-26</b> &mdash; First San Antonio drill results (21 holes / ~3,000 m) and engagement of P&amp;E for a PEA plus resource re-estimate</div>
+<div class='li-row'><b>2026-07-27</b> &mdash; SEMARNAT approves the MIA environmental impact statement for San Antonio; CUS approval still pending</div>
+</div></div></section>
+    <section id="news" class="sec"><div class="sec-head"><span class="sec-no">6</span>Latest News</div><div class="sec-body"><div class="timeline">
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-07-27</div><details class="tl-body"><summary>Axo Metals Secures Major Environmental Permit Approval; Clears Path For Production At San Antonio</summary><div class="tl-sum">SEMARNAT issued a positive decision on the MIA environmental impact statement, which the company calls the primary authorisation required for construction and operation. The MIA covers all existing infrastructure and current resources across every San Antonio deposit. Before mining Sapuchi, Golfo de Oro and California, Axo must still complete the Change of Use of Soils (CUS) step, filed earlier in the year and expected before year-end; the Luz del Cobre pit, stockpiles, waste dumps, CIC plant and camp are described as fully permitted already.</div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-05-26</div><details class="tl-body"><summary>Drilling Intercepts 23.6 m of 2.13 g/t Gold From Surface at San Antonio; PEA Initiated</summary><div class="tl-sum">The first 21 holes (~3,000 m), all at Sapuchi, returned 23.6 m @ 2.13 g/t Au from surface in SOSAP-26-020, 27.1 m @ 1.31 g/t in -021 and 26.8 m @ 1.33 g/t in -018. More significantly, SOSAP-026-015 (18.4 m @ 0.61 g/t) and -013 (27.9 m @ 0.43 g/t incl. 7.1 m @ 0.82 g/t) hit above-cut-off gold inside blocks the 2021 model treated as waste. El Tigre channels returned 68.6 m @ 1.11 g/t (incl. 12.2 m @ 4.00 g/t), 46.8 m @ 0.82 g/t and 5.4 m @ 6.24 g/t. P&amp;E Mining Consultants was engaged to deliver a PEA plus a re-estimated resource at an updated gold price, targeted for late-Q3 calendar 2026.</div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-04-29</div><details class="tl-body"><summary>Axo Copper Announces Name Change to Axo Metals</summary><div class="tl-sum">Shareholders approved the change at an April 27 special meeting; the name became Axo Metals Corp. on 2026-05-01 with the AXO ticker unchanged and new CUSIP 05465W106 / ISIN CA05465W1068. Share structure and shareholder rights were unaffected and no certificate exchange was required. The rebrand formalises the shift from pure copper explorer to gold-plus-copper developer.</div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-03-31</div><details class="tl-body"><summary>Announces Proposed Name Change to Axo Metals</summary><div class="tl-sum">The company filed and mailed a management information circular for an April 27, 2026 special meeting to approve the name change, reflecting the post-acquisition asset mix.</div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-02-23</div><details class="tl-body"><summary>Exploration Update and Drill Programme Initiated at San Antonio</summary><div class="tl-sum">La Huerta hole LHCC-25-043 returned 11.4 m @ 2.26% Cu and 6.29 g/t Ag, including 4.2 m @ 3.69% Cu and 9.33 g/t Ag — a ~40 m down-dip extension of LHCC-25-031. Concurrently the company launched the first drill programme at San Antonio since Osisko Development&#x27;s 2021 campaign, structured as 25,000 m of Sapuchi infill plus 5,000 m of resource-expansion drilling.</div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-02-19</div><details class="tl-body"><summary>Closing of C$40,250,000 Bought Deal Financing Including Full Over-allotment Exercise</summary><div class="tl-sum">The offering closed at C$40.25M with the over-allotment fully exercised — 57,500,000 units for net proceeds of C$37.1M per the financial statements. Proceeds are earmarked for La Huerta and San Antonio exploration and development plus working capital, and lifted cash to C$36.6M at 2026-03-31.</div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-02-13</div><details class="tl-body"><summary>Filing of Final Short Form Prospectus</summary><div class="tl-sum">The final short form prospectus for the bought deal was filed, completing the regulatory step ahead of the February 19 closing.</div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-01-28</div><details class="tl-body"><summary>Bought Deal Upsized from C$25M to C$35M</summary><div class="tl-sum">Announced on the same day as the initial C$25M unit financing, the upsize to C$35M — and ultimately C$40.25M with over-allotment — signals strongly oversubscribed demand immediately after the San Antonio closing.</div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-01-27</div><details class="tl-body"><summary>Completes Acquisition of San Antonio Gold Project from Osisko Development</summary><div class="tl-sum">Closing delivered 15,305,536 shares (~9.99%) to Osisko Development with deferred VAT and US$2M feasibility-study and US$2M first-gold-pour milestones, alongside an amended Osisko Gold Royalties stream for 7,652,768 shares (~4.99%) cutting payable metal from 15.0% to 7.15% and raising the transfer price to 30% of spot. The San Antonio technical report was filed on SEDAR+ the same day.</div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2025-06-19</div><details class="tl-body"><summary>New Discovery at La Huerta South Sees Surface Grades Above 10% Copper</summary><div class="tl-sum">Surface sampling at La Huerta South, roughly 3 km from Las Marias, returned grades above 10% copper, establishing a second focus along the ~5 km La Huerta Trend and justifying the addition of a second rig to the Phase II programme.</div></details></div>
+</div></div></section>
+  </main>
+</div>
+<footer class="ft">
+  Source: official website &middot; AI interpretation of public filings (figures cited from source) &middot;
+  Generated 2026-08-25 &middot; Mineral resources are not mineral reserves and have not demonstrated economic viability
+  (NI 43-101). &middot; <a href="../index.html">&larr; Back to Dashboard</a>
+</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  var mines = [{"name": "La Huerta", "lat": 19.41405, "lng": -104.23656}, {"name": "San Antonio", "lat": 28.617, "lng": -109.75599}];
+  var arr = Array.isArray(mines) ? mines : (mines ? [mines] : []);
+  if(arr.length){
+    var map = L.map('map').setView([arr[0].lat, arr[0].lng], 5);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:16, attribution:'Tiles &copy; Esri'}).addTo(map);
+    arr.forEach(function(m){
+      L.circleMarker([m.lat, m.lng], {radius:8, color:'#1f6feb', fillColor:'#1f6feb', fillOpacity:.85})
+        .addTo(map).bindPopup('<b>'+(m.name||'Project')+'</b>');
+    });
+  }
+})();
+</script>
+</body>
+</html>
