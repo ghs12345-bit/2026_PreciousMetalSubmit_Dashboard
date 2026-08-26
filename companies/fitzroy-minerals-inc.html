@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fitzroy Minerals Inc. — Company Report</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    :root{--bg:#f5f6f8;--panel:#fff;--line:#e3e6ea;--ink:#1f2733;--muted:#6b7480;
+      --accent:#1f6feb;--header:#1c2534;--header-ink:#eaf0f7;}
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:-apple-system,Segoe UI,"Microsoft YaHei",Arial,sans-serif;
+      background:var(--bg);color:var(--ink);line-height:1.6;}
+    header.top{background:var(--header);color:var(--header-ink);padding:14px 22px;display:flex;
+      align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:20;}
+    header.top .cname{font-size:18px;font-weight:700;}
+    header.top .tick{background:var(--accent);color:#fff;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;}
+    header.top .meta{font-size:12px;color:#9fb0c4;}
+    header.top .wlink{color:#7fb0ff;font-size:13px;text-decoration:none;margin-left:auto;}
+    header.top .back{color:#cdd9e8;font-size:13px;text-decoration:none;margin-left:8px;}
+    .layout{display:flex;align-items:flex-start;max-width:1100px;margin:0 auto;padding:18px;}
+    nav.toc{position:sticky;top:80px;width:190px;flex:0 0 190px;align-self:flex-start;
+      background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 10px;margin-right:18px;}
+    nav.toc .tt{font-size:11px;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:4px 6px 8px;}
+    nav.toc ul{list-style:none;margin:0;padding:0;}
+    nav.toc li a{display:block;padding:6px 8px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:13px;}
+    nav.toc li a:hover{background:#eaf1fb;color:var(--accent);}
+    main{flex:1 1 auto;min-width:0;}
+    .sec{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
+    .sec-head{font-size:16px;font-weight:700;margin-bottom:10px;padding-left:12px;border-left:4px solid var(--accent);}
+    .sec-no{color:var(--accent);margin-right:8px;}
+    .sec-body{color:#2b3440;font-size:14px;}
+    .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px;}
+    .metric{background:#f3f7fd;border:1px solid #dbe7fb;border-radius:10px;padding:12px;text-align:center;}
+    .metric-label{font-size:11px;color:var(--muted);}
+    .metric-value{font-size:19px;font-weight:700;color:var(--accent);margin-top:4px;}
+    .metric-rows-card{text-align:left;}
+    .metric-rows-card .mrow{display:flex;justify-content:space-between;font-size:13px;padding:2px 4px;border-top:1px dashed #e6eefb;}
+    .metric-rows-card .mrow b{color:var(--accent);}
+    .bullets{margin:10px 0;padding:10px 14px;border-radius:8px;}
+    .bullets.hl{background:#eef6ee;} .bullets.rk{background:#fbeeec;} .bullets.ct{background:#eef3fb;}
+    .bullets-title{font-weight:700;font-size:13px;margin-bottom:6px;}
+    .bullets ul{margin:0;padding-left:18px;} .bullets li{font-size:13.5px;margin:3px 0;}
+    .bullets.plain{background:none;padding:0;}
+    .bullets.plain ul{padding-left:18px;} .bullets.plain li{font-size:14px;margin:4px 0;}
+    .sub-h{font-weight:700;font-size:13.5px;color:var(--accent);margin:12px 0 4px;}
+    .proj-list .li-row,.people-list .li-row,.ms-list .li-row{padding:6px 0;border-bottom:1px solid var(--line);font-size:14px;}
+    .tag{display:inline-block;background:#eaf1fb;color:var(--accent);font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px;}
+    .li-note{font-size:12.5px;color:var(--muted);margin-top:2px;}
+    .chart-wrap{margin:14px 0;} .chart-cap{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+    svg.chart{background:#fff;border:1px solid var(--line);border-radius:8px;width:100%;height:auto;}
+    svg.chart .cval{fill:var(--ink);font-size:11px;} svg.chart .clab{fill:var(--muted);font-size:11px;}
+    .timeline{position:relative;margin:6px 0 0 6px;padding-left:22px;}
+    .timeline:before{content:"";position:absolute;left:5px;top:4px;bottom:4px;width:2px;background:var(--accent);}
+    .tl-item{position:relative;margin-bottom:12px;}
+    .tl-dot{position:absolute;left:-22px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 0 0 2px var(--accent);}
+    .tl-date{font-size:11px;color:var(--muted);font-weight:700;}
+    .tl-body{margin-top:2px;}
+    .tl-body summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--ink);list-style:none;}
+    .tl-body summary::-webkit-details-marker{display:none;}
+    .tl-body summary:before{content:"▸ ";color:var(--accent);}
+    .tl-body[open] summary:before{content:"▾ ";}
+    .tl-sum{font-size:13px;color:#3a4452;margin:4px 0 2px;padding-left:2px;}
+    .nlink{font-size:12px;color:var(--accent);text-decoration:none;}
+    #map{height:300px;border:1px solid var(--line);border-radius:8px;}
+    .map-note{font-size:12px;color:var(--muted);padding:10px;border:1px dashed var(--line);border-radius:8px;}
+    footer.ft{background:var(--panel);border-top:1px solid var(--line);padding:14px 22px;font-size:12px;color:var(--muted);max-width:1100px;margin:0 auto;}
+    footer.ft a{color:var(--accent);text-decoration:none;}
+    @media(max-width:760px){nav.toc{display:none;}.layout{padding:10px;}}
+    </style>
+</head>
+<body>
+<header class="top">
+  <span class="cname">Fitzroy Minerals Inc.</span>
+  <span class="tick">TSX-V: FTZ</span>
+  <span class="meta">Gold, Silver, Copper &middot; Exploration / Resource Definition (Buen Retiro PFS underway) &middot; Chile &amp; Argentina</span>
+  <a class="wlink" href="https://fitzroyminerals.com" target="_blank" rel="noopener">&#8599; website</a>
+  <a class="back" href="../index.html">&larr; Dashboard</a>
+</header>
+<div class="layout">
+  <nav class="toc"><div class="tt">CONTENTS</div><ul><li><a href="#summary">Executive Summary</a></li><li><a href="#map">Project Map</a></li><li><a href="#overview">Overview</a></li><li><a href="#assets">Core Assets</a></li><li><a href="#financials">Financials</a></li><li><a href="#management">Management</a></li><li><a href="#profile">Company Profile</a></li><li><a href="#news">Latest News</a></li></ul></nav>
+  <main>
+    <section id="summary" class="sec">
+      <div class="sec-head"><span class="sec-no">&#9733;</span>Executive Summary</div>
+      <div class="sec-body"><div class="metric-grid">
+<div class="metric"><div class="metric-label">Commodity</div><div class="metric-value">Cu-Au-Ag</div></div>
+<div class="metric"><div class="metric-label">Exchange</div><div class="metric-value">TSX-V: FTZ</div></div>
+<div class="metric"><div class="metric-label">Stage</div><div class="metric-value">Exploration / R&amp;D</div></div>
+<div class="metric metric-rows-card"><div class="metric-label">Reported Resources</div><div class="mrow"><span>Published MRE</span><b>None yet (to date)</b></div><div class="mrow"><span>Buen Retiro</span><b>MRE/PFS → 2027</b></div><div class="mrow"><span>Exploration</span><b>Cu-Au-Ag, Chile/Arg</b></div></div>
+<div class="metric"><div class="metric-label">Cash (Jun 2026)</div><div class="metric-value">~US$23.9M</div></div>
+<div class="metric"><div class="metric-label">Country</div><div class="metric-value">Chile &amp; Argentina</div></div>
+</div><div class="bullets hl"><div class="bullets-title">Investment highlights</div><ul><li>Copper-gold explorer in the prolific Punta del Cobre / central Chile belt and Argentina, targeting shallow, good-grade, infrastructure-adjacent discoveries.</li><li>Flagship Buen Retiro (IOCG, 43 km from Lundin&#x27;s Candelaria) is advancing to resource definition; maiden MRE and heap-leach PFS targeted for Q2 2027.</li><li>2026 drilling at Buen Retiro extended the main mineralized trend to 1.9 km and cut the highest-grade copper to date; Phase 3 program ~22,000 m.</li><li>Caballos (Cu-Mo-Au) shows a 10+ km chargeable trend along the Pocuro Fault; 2026 deep-IP identified large anomalies linked to Cu-Mo-Au intercepts.</li><li>Funded: ~US$23.9M cash (Jun 2026) and ~328M shares; staged, capped option earn-ins limit up-front outlay.</li></ul></div><div class="bullets rk"><div class="bullets-title">Key risks</div><ul><li>No NI 43-101 mineral resource yet — both Caballos and Buen Retiro technical reports explicitly state none; resource risk is high.</li><li>Buen Retiro MRE/PFS depend on ongoing drilling, heap-leach metallurgy and a US$7M+ work commitment by mid-2027.</li><li>Pucobre 30% claw-back right and 2% NSR at Buen Retiro could dilute economics/control; processing LOI is non-binding.</li><li>Pre-revenue explorer reliant on continuous share issuance; ~US$23.9M cash funds only a limited runway.</li><li>Jurisdiction (Chile/Argentina) permitting, water/community and FX exposure; early-stage grade/continuity unproven.</li></ul></div><div class="bullets ct"><div class="bullets-title">Near-term catalysts</div><ul><li>Buen Retiro maiden MRE and PFS (target Q2 2027) — potential near-term heap-leach development case.</li><li>Continued Phase 3 drilling at Buen Retiro (22,000 m) extending the 1.9 km trend and high-grade intercepts.</li><li>Caballos drill testing of IP anomalies along the 10+ km Pocuro Fault trend.</li><li>Advance of Buen Retiro/Caballos option earn-ins; possible strategic partner (Pucobre).</li><li>Polimet (Au-Cu-Ag) and Taquetren (Ag) exploration updates.</li></ul></div></div>
+    </section>
+    <section id="map" class="sec">
+      <div class="sec-head"><span class="sec-no">&bull;</span>Project Map</div>
+      <div class="sec-body"><div id="map"></div></div>
+    </section>
+    <section id="overview" class="sec"><div class="sec-head"><span class="sec-no">1</span>Overview</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Fitzroy is a Chile/Argentina copper-gold(-silver) explorer focused on shallow, good-grade, infrastructure-adjacent projects with simple metallurgy.</li><li>Flagship Buen Retiro (IOCG, 43 km from Lundin&#x27;s Candelaria) is in resource-definition with a maiden MRE and heap-leach PFS targeted for 2027; Caballos is a Cu-Mo-Au porphyry/breccia target along the Pocuro Fault.</li><li>Pre-revenue company funding exploration via treasury (~US$23.9M cash, Jun 2026); no mineral resource declared to date.</li></ul></div><div class="sub-h">Investment thesis</div><div class="bullets plain"><div class="bullets-title"></div><ul><li>Shallow, infrastructure-adjacent Cu-Au in a top-tier Chile belt</li><li>Buen Retiro resource + heap-leach PFS imminent (2027)</li><li>Staged, capped option earn-ins limit up-front risk</li></ul></div></div></section>
+    <section id="assets" class="sec"><div class="sec-head"><span class="sec-no">2</span>Core Assets</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Buen Retiro (Chile, IOCG): 13,840 ha; historical Manto Negro oxide mine; ~26,000 m of recent drilling; main trend extended to 1.9 km; resource definition + PFS (heap leach) underway, target Q2 2027. No published MRE yet [NI 43-101 TR Feb 2025 confirms no current estimate].</li><li>Caballos (Chile, Cu-Mo-Au): 18,000 ha; 10+ km chargeable trend along the Pocuro Fault; 2026 IP identified large anomalies linked to Cu-Mo-Au intercepts; NI 43-101 (Jul 2024) confirms no current resource estimate.</li><li>Polimet (Chile, Au-Cu-Ag epithermal veins): high-grade historical production (DSO 33.5 g/t Au, 6.9% Cu); early-stage.</li><li>Taquetren (Argentina, Ag) and diamond projects (Courageous Lake, Hearne Lake, Kolandoto) provide commodity diversification.</li><li>Cross-check: technical reports for both Caballos and Buen Retiro explicitly state &#x27;no historical or current mineral resource estimates&#x27; — headline resource figures are not yet available; deck claims are exploration targets only.</li></ul></div><div class="proj-list">
+<div class='li-row'><b>Buen Retiro</b><div class="li-note">IOCG, heap-leach PFS targeted Q2 2027</div></div>
+<div class='li-row'><b>Caballos</b><div class="li-note">Cu-Mo-Au breccia/porphyry, Pocuro Fault</div></div>
+<div class='li-row'><b>Polimet</b><div class="li-note">Au-Cu-Ag epithermal veins, Chile</div></div>
+<div class='li-row'><b>Taquetren</b><div class="li-note">Silver project, Argentina</div></div>
+</div><div class="chart-wrap"><div class="chart-cap">Contained metal by project</div></div></div></section>
+    <section id="financials" class="sec"><div class="sec-head"><span class="sec-no">3</span>Financials &amp;amp; Capital Structure</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Pre-revenue explorer; net loss of US$5.25M for the nine months to June 30, 2026 (MD&amp;A, objective).</li><li>Cash and equivalents ~US$23.9M at June 30, 2026; ~328M shares outstanding (May 2026).</li><li>Funded by treasury share issuance; modest near-term runway — further financings likely as the Buen Retiro PFS advances.</li><li>Buen Retiro carry requires ~US$11.3M eligible exploration/technical spend + US$4M bullet by mid-2028 (capped exposure).</li><li>At Buen Retiro, Pucobre holds a 30% claw-back right and a 2% NSR; detailed cap-table not in reviewed filings.</li></ul></div><div class="chart-wrap"><div class="chart-cap">Shareholder structure</div></div></div></section>
+    <section id="management" class="sec"><div class="sec-head"><span class="sec-no">4</span>Management &amp;amp; Board</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Led by President &amp; CEO Merlin Marr-Johnson, Chairman Campbell Smyth and CFO Queenie Kuang.</li><li>Team focused on copper discovery and project generation in Chile and Argentina; leverages historical datasets and systematic exploration.</li></ul></div><div class="people-list">
+<div class='li-row'><b>Merlin Marr-Johnson</b> <span class="tag">President &amp; CEO</span></div>
+<div class='li-row'><b>Campbell Smyth</b> <span class="tag">Chairman</span></div>
+<div class='li-row'><b>Queenie Kuang</b> <span class="tag">CFO</span></div>
+</div></div></section>
+    <section id="profile" class="sec"><div class="sec-head"><span class="sec-no">5</span>Company Profile</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>BC-incorporated (1985) junior focused on copper-gold in Chile and Argentina; consolidated Buen Retiro tenure in 2023 and began systematic exploration.</li><li>Building a pipeline of shallow Cu-Au projects; Buen Retiro is the near-term value driver toward a heap-leach development case.</li></ul></div><div class="ms-list">
+<div class='li-row'><b>2023</b> &mdash; Consolidated Buen Retiro tenure; began systematic exploration</div>
+<div class='li-row'><b>2024-07</b> &mdash; Caballos NI 43-101 technical report (no MRE)</div>
+<div class='li-row'><b>2025-02</b> &mdash; Buen Retiro NI 43-101 technical report (no MRE)</div>
+<div class='li-row'><b>2026-08</b> &mdash; Buen Retiro strike extended to 1.9 km; highest-grade Cu; Caballos IP anomalies</div>
+</div></div></section>
+    <section id="news" class="sec"><div class="sec-head"><span class="sec-no">6</span>Latest News</div><div class="sec-body"><div class="timeline">
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-08-20</div><details class="tl-body"><summary>Buen Retiro: Highest-Grade Copper to Date; Strike Extended to 1.9 km</summary><div class="tl-sum">Phase 3 drilling extended the main mineralized trend to 1.9 km and intersected the highest-grade copper encountered at the project to date. <a href="https://fitzroyminerals.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-08-13</div><details class="tl-body"><summary>Caballos: Deep IP Identifies Large Chargeability Anomalies</summary><div class="tl-sum">IP survey outlined multiple large anomalies linked to Cu-Mo-Au drill intercepts along the Pocuro Fault trend. <a href="https://fitzroyminerals.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-08-04</div><details class="tl-body"><summary>Fitzroy Engages the Howard Group for Digital Marketing</summary><div class="tl-sum">Retained the Howard Group to broaden investor awareness. <a href="https://fitzroyminerals.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-05-30</div><details class="tl-body"><summary>Q3 (9M) Financial Results to June 30, 2026</summary><div class="tl-sum">Reported ~US$23.9M cash and a US$5.25M net loss for the nine-month period; pre-revenue explorer. <a href="https://fitzroyminerals.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+</div></div></section>
+  </main>
+</div>
+<footer class="ft">
+  Source: official website &middot; AI interpretation of public filings (figures cited from source) &middot;
+  Generated 2026-08-25 &middot; Mineral resources are not mineral reserves and have not demonstrated economic viability
+  (NI 43-101). &middot; <a href="../index.html">&larr; Back to Dashboard</a>
+</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  var mines = [{"name": "Buen Retiro", "lat": -27.82538, "lng": -70.56092}, {"name": "Caballos", "lat": -32.26477, "lng": -70.5245}, {"name": "Courageous Lake", "lat": 64.09032, "lng": -110.96542}, {"name": "Hearne Lake", "lat": 62.24974, "lng": -113.2682}, {"name": "Kolandoto", "lat": -3.61583, "lng": 33.60667}, {"name": "Polimet", "lat": -32.31457, "lng": -70.91362}, {"name": "Taquetren", "lat": -41.68321, "lng": -69.60746}];
+  var arr = Array.isArray(mines) ? mines : (mines ? [mines] : []);
+  if(arr.length){
+    var map = L.map('map').setView([arr[0].lat, arr[0].lng], 5);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:16, attribution:'Tiles &copy; Esri'}).addTo(map);
+    arr.forEach(function(m){
+      L.circleMarker([m.lat, m.lng], {radius:8, color:'#1f6feb', fillColor:'#1f6feb', fillOpacity:.85})
+        .addTo(map).bindPopup('<b>'+(m.name||'Project')+'</b>');
+    });
+  }
+})();
+</script>
+</body>
+</html>
