@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mirasol Resources Ltd — Company Report</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    :root{--bg:#f5f6f8;--panel:#fff;--line:#e3e6ea;--ink:#1f2733;--muted:#6b7480;
+      --accent:#1f6feb;--header:#1c2534;--header-ink:#eaf0f7;}
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:-apple-system,Segoe UI,"Microsoft YaHei",Arial,sans-serif;
+      background:var(--bg);color:var(--ink);line-height:1.6;}
+    header.top{background:var(--header);color:var(--header-ink);padding:14px 22px;display:flex;
+      align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:20;}
+    header.top .cname{font-size:18px;font-weight:700;}
+    header.top .tick{background:var(--accent);color:#fff;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;}
+    header.top .meta{font-size:12px;color:#9fb0c4;}
+    header.top .wlink{color:#7fb0ff;font-size:13px;text-decoration:none;margin-left:auto;}
+    header.top .back{color:#cdd9e8;font-size:13px;text-decoration:none;margin-left:8px;}
+    .layout{display:flex;align-items:flex-start;max-width:1100px;margin:0 auto;padding:18px;}
+    nav.toc{position:sticky;top:80px;width:190px;flex:0 0 190px;align-self:flex-start;
+      background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 10px;margin-right:18px;}
+    nav.toc .tt{font-size:11px;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:4px 6px 8px;}
+    nav.toc ul{list-style:none;margin:0;padding:0;}
+    nav.toc li a{display:block;padding:6px 8px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:13px;}
+    nav.toc li a:hover{background:#eaf1fb;color:var(--accent);}
+    main{flex:1 1 auto;min-width:0;}
+    .sec{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
+    .sec-head{font-size:16px;font-weight:700;margin-bottom:10px;padding-left:12px;border-left:4px solid var(--accent);}
+    .sec-no{color:var(--accent);margin-right:8px;}
+    .sec-body{color:#2b3440;font-size:14px;}
+    .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px;}
+    .metric{background:#f3f7fd;border:1px solid #dbe7fb;border-radius:10px;padding:12px;text-align:center;}
+    .metric-label{font-size:11px;color:var(--muted);}
+    .metric-value{font-size:19px;font-weight:700;color:var(--accent);margin-top:4px;}
+    .metric-rows-card{text-align:left;}
+    .metric-rows-card .mrow{display:flex;justify-content:space-between;font-size:13px;padding:2px 4px;border-top:1px dashed #e6eefb;}
+    .metric-rows-card .mrow b{color:var(--accent);}
+    .bullets{margin:10px 0;padding:10px 14px;border-radius:8px;}
+    .bullets.hl{background:#eef6ee;} .bullets.rk{background:#fbeeec;} .bullets.ct{background:#eef3fb;}
+    .bullets-title{font-weight:700;font-size:13px;margin-bottom:6px;}
+    .bullets ul{margin:0;padding-left:18px;} .bullets li{font-size:13.5px;margin:3px 0;}
+    .bullets.plain{background:none;padding:0;}
+    .bullets.plain ul{padding-left:18px;} .bullets.plain li{font-size:14px;margin:4px 0;}
+    .sub-h{font-weight:700;font-size:13.5px;color:var(--accent);margin:12px 0 4px;}
+    .proj-list .li-row,.people-list .li-row,.ms-list .li-row{padding:6px 0;border-bottom:1px solid var(--line);font-size:14px;}
+    .tag{display:inline-block;background:#eaf1fb;color:var(--accent);font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px;}
+    .li-note{font-size:12.5px;color:var(--muted);margin-top:2px;}
+    .chart-wrap{margin:14px 0;} .chart-cap{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+    svg.chart{background:#fff;border:1px solid var(--line);border-radius:8px;width:100%;height:auto;}
+    svg.chart .cval{fill:var(--ink);font-size:11px;} svg.chart .clab{fill:var(--muted);font-size:11px;}
+    .timeline{position:relative;margin:6px 0 0 6px;padding-left:22px;}
+    .timeline:before{content:"";position:absolute;left:5px;top:4px;bottom:4px;width:2px;background:var(--accent);}
+    .tl-item{position:relative;margin-bottom:12px;}
+    .tl-dot{position:absolute;left:-22px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 0 0 2px var(--accent);}
+    .tl-date{font-size:11px;color:var(--muted);font-weight:700;}
+    .tl-body{margin-top:2px;}
+    .tl-body summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--ink);list-style:none;}
+    .tl-body summary::-webkit-details-marker{display:none;}
+    .tl-body summary:before{content:"▸ ";color:var(--accent);}
+    .tl-body[open] summary:before{content:"▾ ";}
+    .tl-sum{font-size:13px;color:#3a4452;margin:4px 0 2px;padding-left:2px;}
+    .nlink{font-size:12px;color:var(--accent);text-decoration:none;}
+    #map{height:300px;border:1px solid var(--line);border-radius:8px;}
+    .map-note{font-size:12px;color:var(--muted);padding:10px;border:1px dashed var(--line);border-radius:8px;}
+    footer.ft{background:var(--panel);border-top:1px solid var(--line);padding:14px 22px;font-size:12px;color:var(--muted);max-width:1100px;margin:0 auto;}
+    footer.ft a{color:var(--accent);text-decoration:none;}
+    @media(max-width:760px){nav.toc{display:none;}.layout{padding:10px;}}
+    </style>
+</head>
+<body>
+<header class="top">
+  <span class="cname">Mirasol Resources Ltd</span>
+  <span class="tick">TSX-V: MRZ</span>
+  <span class="meta">Copper, Gold, Silver (project generator) &middot; Exploration (Project Generator) &middot; Chile &amp; Argentina</span>
+  <a class="wlink" href="https://mirasolresources.com" target="_blank" rel="noopener">&#8599; website</a>
+  <a class="back" href="../index.html">&larr; Dashboard</a>
+</header>
+<div class="layout">
+  <nav class="toc"><div class="tt">CONTENTS</div><ul><li><a href="#summary">Executive Summary</a></li><li><a href="#map">Project Map</a></li><li><a href="#overview">Overview</a></li><li><a href="#assets">Core Assets</a></li><li><a href="#financials">Financials</a></li><li><a href="#management">Management</a></li><li><a href="#profile">Company Profile</a></li><li><a href="#news">Latest News</a></li></ul></nav>
+  <main>
+    <section id="summary" class="sec">
+      <div class="sec-head"><span class="sec-no">&#9733;</span>Executive Summary</div>
+      <div class="sec-body"><div class="metric-grid">
+<div class="metric"><div class="metric-label">Stage</div><div class="metric-value">Exploration (Generator)</div></div>
+<div class="metric"><div class="metric-label">Country</div><div class="metric-value">Chile &amp; Argentina</div></div>
+<div class="metric"><div class="metric-label">Shares (Mar 2026)</div><div class="metric-value">~82.9M</div></div>
+<div class="metric"><div class="metric-label">Cash (Mar 31 26)</div><div class="metric-value">C$0.89M</div></div>
+<div class="metric"><div class="metric-label">Flagship</div><div class="metric-value">Sobek (Vicuña, Chile)</div></div>
+<div class="metric metric-rows-card"><div class="metric-label">Portfolio (selected)</div><div class="mrow"><span>Sobek (Cu-Au-Ag)</span><b>100%-owned, 9,640 ha</b></div><div class="mrow"><span>Virginia (Ag)</span><b>Optioned to Silver Sands</b></div><div class="mrow"><span>Total projects</span><b>14+ in Chile/Argentina</b></div></div>
+</div><div class="bullets hl"><div class="bullets-title">Investment highlights</div><ul><li>Flagship Sobek is a 100%-owned Cu-Au-Ag porphyry in Chile&#x27;s Vicuña District, only 7 km west of BHP/Lundin&#x27;s Filo del Sol and 3 km SW of NGEx&#x27;s Lunahuasi.</li><li>Active 2026 exploration/drilling at Sobek (46 South, VN-Zone, Green Wall) confirmed a structurally controlled hydrothermal system and high-grade surface Cu-Au (rock chips up to 14.7% Cu; 5.03 g/t Au).</li><li>Project-generator model with a large portfolio (14+ projects) across Chile and Argentina; Virginia silver project optioned to Silver Sands Resources.</li><li>District-scale position in the Vicuña — one of the world&#x27;s premier copper-gold discovery belts.</li></ul></div><div class="bullets rk"><div class="bullets-title">Key risks</div><ul><li>Pre-revenue explorer with a working-capital deficit (~C$1.55M at Mar 31, 2026) and ongoing burn; financing dependent on capital markets/JV partners.</li><li>Sobek is early-stage with no resource; 2026 drilling returned only anomalous (not economic-grade) intervals — discovery risk is high.</li><li>Project-generator model reliant on partnering/optioning to advance projects; many assets remain available for partnership.</li><li>Share price was not captured in this review (TSX-V: MRZ / OTC: MRZLF).</li></ul></div><div class="bullets ct"><div class="bullets-title">Near-term catalysts</div><ul><li>Follow-up drilling at Sobek (VN-Zone IP target, 46 South extension, Green Wall).</li><li>Potential new partnership/option deals across the broad Chile/Argentina portfolio.</li><li>Advancement of Virginia (with Silver Sands) and other partnered assets.</li><li>Regional exploration success in the Vicuña District de-risking Sobek&#x27;s setting.</li></ul></div></div>
+    </section>
+    <section id="map" class="sec">
+      <div class="sec-head"><span class="sec-no">&bull;</span>Project Map</div>
+      <div class="sec-body"><div id="map"></div></div>
+    </section>
+    <section id="overview" class="sec"><div class="sec-head"><span class="sec-no">1</span>Overview</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Mirasol Resources Ltd. (TSX-V: MRZ; OTC: MRZLF) is a project generator focused on copper, gold and silver discoveries in the mineral-rich regions of Chile and Argentina.</li><li>The flagship is the 100%-owned Sobek Cu-Au-Ag porphyry in Chile&#x27;s Vicuña District, strategically located 7 km west of Filo del Sol (BHP/Lundin) and 3 km SW of NGEx&#x27;s Lunahuasi.</li><li>Mirasol operates a project-generator model, retaining a large portfolio of grassroots-to-advanced projects and advancing select assets (e.g. Sobek) with self-funded exploration while seeking partners for the remainder.</li></ul></div><div class="sub-h">Operating model</div><div class="bullets plain"><div class="bullets-title"></div><ul><li>Self-funded Sobek exploration; broader portfolio (Virginia, Claudia, Gorbea Belt, Zeus, etc.) available for partnership/option.</li><li>2026 field season at Sobek completed with target refinement and two 46 South drill holes.</li></ul></div></div></section>
+    <section id="assets" class="sec"><div class="sec-head"><span class="sec-no">2</span>Core Assets</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Sobek (Chile, Vicuña District): 100%-owned 9,640 ha Cu-Au-Ag porphyry (plus 4,600 ha 80% earn-in Rosita with SQM). Located 7 km west of Filo del Sol. 2026 drilling at 46 South confirmed a structurally controlled hydrothermal system; VN-Zone IP highlights a resistivity contrast increasing with depth; Green Wall shows high-grade copper surface samples (up to 14.7% Cu, 131 g/t Ag). No resource yet.</li><li>Virginia (Santa Cruz, Argentina): LSE silver project (74,429 ha) under a definitive option agreement with Silver Sands Resources Corp.</li><li>Broad portfolio across Chile &amp; Argentina: Claudia, Sascha-Marcelina, La Curva, Homenaje, Libanesa (Argentina, Santa Cruz); Altazor, Coronación, Gorbea Belt, Rubi, Osiris, Zeus (Chile, Mio-Pliocene belt) — largely available for partnership.</li></ul></div><div class="proj-list">
+<div class='li-row'><b>Sobek</b><div class="li-note">Cu-Au-Ag porphyry; 7 km W of Filo del Sol</div></div>
+<div class='li-row'><b>Virginia</b><div class="li-note">LSE silver; Santa Cruz, Argentina</div></div>
+<div class='li-row'><b>Gorbea Belt / Zeus</b><div class="li-note">HSE gold; northern Chile</div></div>
+<div class='li-row'><b>Claudia / La Curva</b><div class="li-note">LSE Au-Ag; Santa Cruz, Argentina</div></div>
+</div><div class="chart-wrap"><div class="chart-cap">Contained metal by project</div></div></div></section>
+    <section id="financials" class="sec"><div class="sec-head"><span class="sec-no">3</span>Financials &amp;amp; Capital Structure</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Pre-revenue exploration company; no operating cash flow.</li><li>As of March 31, 2026: cash &amp; equivalents ~C$0.89M; working-capital deficit ~C$1.55M; net loss ~C$1.83M for the nine-month period.</li><li>Weighted-average shares outstanding ~82.9M (Q3 FY2026). Share price was not captured in this review (TSX-V: MRZ / OTC: MRZLF).</li><li>Funding reliant on capital markets and project-partner/option agreements.</li></ul></div><div class="chart-wrap"><div class="chart-cap">Shareholder structure</div></div></div></section>
+    <section id="management" class="sec"><div class="sec-head"><span class="sec-no">4</span>Management &amp;amp; Board</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Led by President, CEO &amp; Director Tim Heenan; CFO Francisco Del Castillo. Board includes Nick DeMare, Diane Nicolson and others.</li></ul></div><div class="people-list">
+<div class='li-row'><b>Tim Heenan</b> <span class="tag">President, CEO &amp; Director</span></div>
+<div class='li-row'><b>Francisco Del Castillo, CPA</b> <span class="tag">CFO</span></div>
+<div class='li-row'><b>Nick DeMare, CPA, CA</b> <span class="tag">Director</span></div>
+<div class='li-row'><b>Diane Nicolson</b> <span class="tag">Director</span></div>
+<div class='li-row'><b>Troy Shultz, MBA</b> <span class="tag">VP Investor Relations</span></div>
+</div></div></section>
+    <section id="profile" class="sec"><div class="sec-head"><span class="sec-no">5</span>Company Profile</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Mirasol is a project generator with a district-scale land position in the Vicuña (Chile) and Santa Cruz (Argentina) belts.</li><li>The self-funded Sobek flagship anchors the portfolio; the remainder is advanced via partnerships and option agreements.</li></ul></div><div class="ms-list">
+<div class='li-row'><b>2016</b> &mdash; Sobek staked by Mirasol</div>
+<div class='li-row'><b>2026-01-22</b> &mdash; Drilling underway at Sobek (46 South target)</div>
+<div class='li-row'><b>2026-04-23</b> &mdash; Sobek exploration update &amp; first drill results</div>
+<div class='li-row'><b>2026-06-22</b> &mdash; Sobek season complete; VN-Zone/Green Wall refined as targets</div>
+<div class='li-row'><b>2026</b> &mdash; Virginia silver project optioned to Silver Sands</div>
+</div></div></section>
+    <section id="news" class="sec"><div class="sec-head"><span class="sec-no">6</span>Latest News</div><div class="sec-body"><div class="timeline">
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-06-22</div><details class="tl-body"><summary>Sobek Exploration Update (Season Complete)</summary><div class="tl-sum">Season completed at Sobek (7 km W of Filo del Sol, 3 km SW of Lunahuasi). VN-Zone refined as a high-priority IP target; 46 South hole S46-DDH-002 confirmed the hydrothermal system extends south; Green Wall interpreted as leakage from a concealed Cu system. <a href="https://mirasolresources.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-04-23</div><details class="tl-body"><summary>Sobek Exploration Update and Drill Results</summary><div class="tl-sum">Two diamond drill holes tested the 46 South target. S46-DDH-002 returned anomalous gold/copper intervals (e.g. 3.72m @ 0.16 g/t Au) confirming structurally controlled mineralization. <a href="https://mirasolresources.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-01-22</div><details class="tl-body"><summary>Drilling Underway at Sobek</summary><div class="tl-sum">Drilling commenced at the 46 South target at the south end of a 3-km N-S corridor hosting alteration and mineralization at Sobek Central, parallel to Filo del Sol ~7 km east. <a href="https://mirasolresources.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026</div><details class="tl-body"><summary>Q3 Financial Statements &amp; MD&amp;A Filed</summary><div class="tl-sum">Interim financials for the period ended March 31, 2026 show cash ~C$0.89M and a working-capital deficit ~C$1.55M, reflecting ongoing exploration expenditure. <a href="https://mirasolresources.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+</div></div></section>
+  </main>
+</div>
+<footer class="ft">
+  Source: official website &middot; AI interpretation of public filings (figures cited from source) &middot;
+  Generated 2026-08-25 &middot; Mineral resources are not mineral reserves and have not demonstrated economic viability
+  (NI 43-101). &middot; <a href="../index.html">&larr; Back to Dashboard</a>
+</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  var mines = [{"name": "Altazor", "lat": -24.14899, "lng": -67.68287}, {"name": "Atlas", "lat": -25.37394, "lng": -68.9783}, {"name": "Claudia", "lat": -48.562961, "lng": -68.25673}, {"name": "Coronacion", "lat": -24.33329, "lng": -68.15585}, {"name": "Curva", "lat": -47.583, "lng": -67.228}, {"name": "Espejo", "lat": -48.868, "lng": -69.347}, {"name": "Indra", "lat": -25.23296, "lng": -69.52184}, {"name": "Libanesa", "lat": -47.80952, "lng": -66.78605}, {"name": "Los Amarillos", "lat": -26.20464, "lng": -69.6833}, {"name": "Nico", "lat": -48.35158, "lng": -69.6407}, {"name": "Nord", "lat": -25.83821, "lng": -69.31831}, {"name": "Pajaro", "lat": -48.057885, "lng": -66.962729}, {"name": "Rubi", "lat": -26.39, "lng": -69.67}, {"name": "Santa Rita", "lat": -47.39176, "lng": -70.14506}, {"name": "Sobek", "lat": -28.36366, "lng": -69.72077}, {"name": "Titan", "lat": -25.3816, "lng": -68.96911}, {"name": "Vaquillas", "lat": -26.0353, "lng": -68.58661}, {"name": "Virginia", "lat": -47.46658, "lng": -69.94496}, {"name": "Zeus", "lat": -26.08563, "lng": -68.50109}];
+  var arr = Array.isArray(mines) ? mines : (mines ? [mines] : []);
+  if(arr.length){
+    var map = L.map('map').setView([arr[0].lat, arr[0].lng], 5);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:16, attribution:'Tiles &copy; Esri'}).addTo(map);
+    arr.forEach(function(m){
+      L.circleMarker([m.lat, m.lng], {radius:8, color:'#1f6feb', fillColor:'#1f6feb', fillOpacity:.85})
+        .addTo(map).bindPopup('<b>'+(m.name||'Project')+'</b>');
+    });
+  }
+})();
+</script>
+</body>
+</html>
