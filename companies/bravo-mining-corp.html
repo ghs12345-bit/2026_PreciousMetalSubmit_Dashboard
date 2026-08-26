@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bravo Mining Corp. — Company Report</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    :root{--bg:#f5f6f8;--panel:#fff;--line:#e3e6ea;--ink:#1f2733;--muted:#6b7480;
+      --accent:#1f6feb;--header:#1c2534;--header-ink:#eaf0f7;}
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:-apple-system,Segoe UI,"Microsoft YaHei",Arial,sans-serif;
+      background:var(--bg);color:var(--ink);line-height:1.6;}
+    header.top{background:var(--header);color:var(--header-ink);padding:14px 22px;display:flex;
+      align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:20;}
+    header.top .cname{font-size:18px;font-weight:700;}
+    header.top .tick{background:var(--accent);color:#fff;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;}
+    header.top .meta{font-size:12px;color:#9fb0c4;}
+    header.top .wlink{color:#7fb0ff;font-size:13px;text-decoration:none;margin-left:auto;}
+    header.top .back{color:#cdd9e8;font-size:13px;text-decoration:none;margin-left:8px;}
+    .layout{display:flex;align-items:flex-start;max-width:1100px;margin:0 auto;padding:18px;}
+    nav.toc{position:sticky;top:80px;width:190px;flex:0 0 190px;align-self:flex-start;
+      background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 10px;margin-right:18px;}
+    nav.toc .tt{font-size:11px;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:4px 6px 8px;}
+    nav.toc ul{list-style:none;margin:0;padding:0;}
+    nav.toc li a{display:block;padding:6px 8px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:13px;}
+    nav.toc li a:hover{background:#eaf1fb;color:var(--accent);}
+    main{flex:1 1 auto;min-width:0;}
+    .sec{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
+    .sec-head{font-size:16px;font-weight:700;margin-bottom:10px;padding-left:12px;border-left:4px solid var(--accent);}
+    .sec-no{color:var(--accent);margin-right:8px;}
+    .sec-body{color:#2b3440;font-size:14px;}
+    .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px;}
+    .metric{background:#f3f7fd;border:1px solid #dbe7fb;border-radius:10px;padding:12px;text-align:center;}
+    .metric-label{font-size:11px;color:var(--muted);}
+    .metric-value{font-size:19px;font-weight:700;color:var(--accent);margin-top:4px;}
+    .metric-rows-card{text-align:left;}
+    .metric-rows-card .mrow{display:flex;justify-content:space-between;font-size:13px;padding:2px 4px;border-top:1px dashed #e6eefb;}
+    .metric-rows-card .mrow b{color:var(--accent);}
+    .bullets{margin:10px 0;padding:10px 14px;border-radius:8px;}
+    .bullets.hl{background:#eef6ee;} .bullets.rk{background:#fbeeec;} .bullets.ct{background:#eef3fb;}
+    .bullets-title{font-weight:700;font-size:13px;margin-bottom:6px;}
+    .bullets ul{margin:0;padding-left:18px;} .bullets li{font-size:13.5px;margin:3px 0;}
+    .bullets.plain{background:none;padding:0;}
+    .bullets.plain ul{padding-left:18px;} .bullets.plain li{font-size:14px;margin:4px 0;}
+    .sub-h{font-weight:700;font-size:13.5px;color:var(--accent);margin:12px 0 4px;}
+    .proj-list .li-row,.people-list .li-row,.ms-list .li-row{padding:6px 0;border-bottom:1px solid var(--line);font-size:14px;}
+    .tag{display:inline-block;background:#eaf1fb;color:var(--accent);font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px;}
+    .li-note{font-size:12.5px;color:var(--muted);margin-top:2px;}
+    .chart-wrap{margin:14px 0;} .chart-cap{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+    svg.chart{background:#fff;border:1px solid var(--line);border-radius:8px;width:100%;height:auto;}
+    svg.chart .cval{fill:var(--ink);font-size:11px;} svg.chart .clab{fill:var(--muted);font-size:11px;}
+    .timeline{position:relative;margin:6px 0 0 6px;padding-left:22px;}
+    .timeline:before{content:"";position:absolute;left:5px;top:4px;bottom:4px;width:2px;background:var(--accent);}
+    .tl-item{position:relative;margin-bottom:12px;}
+    .tl-dot{position:absolute;left:-22px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 0 0 2px var(--accent);}
+    .tl-date{font-size:11px;color:var(--muted);font-weight:700;}
+    .tl-body{margin-top:2px;}
+    .tl-body summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--ink);list-style:none;}
+    .tl-body summary::-webkit-details-marker{display:none;}
+    .tl-body summary:before{content:"▸ ";color:var(--accent);}
+    .tl-body[open] summary:before{content:"▾ ";}
+    .tl-sum{font-size:13px;color:#3a4452;margin:4px 0 2px;padding-left:2px;}
+    .nlink{font-size:12px;color:var(--accent);text-decoration:none;}
+    #map{height:300px;border:1px solid var(--line);border-radius:8px;}
+    .map-note{font-size:12px;color:var(--muted);padding:10px;border:1px dashed var(--line);border-radius:8px;}
+    footer.ft{background:var(--panel);border-top:1px solid var(--line);padding:14px 22px;font-size:12px;color:var(--muted);max-width:1100px;margin:0 auto;}
+    footer.ft a{color:var(--accent);text-decoration:none;}
+    @media(max-width:760px){nav.toc{display:none;}.layout{padding:10px;}}
+    </style>
+</head>
+<body>
+<header class="top">
+  <span class="cname">Bravo Mining Corp.</span>
+  <span class="tick">TSX-V: BRVO</span>
+  <span class="meta">PGM (Pd, Pt, Rh, Au) + Nickel + Copper + Cobalt &middot; PEA complete (2025); Pre-Feasibility Study targeted Q3 2026 &middot; Brazil</span>
+  <a class="wlink" href="https://bravomining.com" target="_blank" rel="noopener">&#8599; website</a>
+  <a class="back" href="../index.html">&larr; Dashboard</a>
+</header>
+<div class="layout">
+  <nav class="toc"><div class="tt">CONTENTS</div><ul><li><a href="#summary">Executive Summary</a></li><li><a href="#map">Project Map</a></li><li><a href="#overview">Overview</a></li><li><a href="#assets">Core Assets</a></li><li><a href="#financials">Financials</a></li><li><a href="#management">Management</a></li><li><a href="#profile">Company Profile</a></li><li><a href="#news">Latest News</a></li></ul></nav>
+  <main>
+    <section id="summary" class="sec">
+      <div class="sec-head"><span class="sec-no">&#9733;</span>Executive Summary</div>
+      <div class="sec-body"><div class="metric-grid">
+<div class="metric"><div class="metric-label">Commodity</div><div class="metric-value">PGM (Pd/Pt/Rh/Au) + Ni/Cu</div></div>
+<div class="metric"><div class="metric-label">Exchange</div><div class="metric-value">TSX-V: BRVO; OTCQX: BRVMF</div></div>
+<div class="metric"><div class="metric-label">Stage</div><div class="metric-value">PEA done; PFS Q3-2026</div></div>
+<div class="metric"><div class="metric-label">Cash (Jun-2026)</div><div class="metric-value">US$94.1M</div></div>
+<div class="metric"><div class="metric-label">PEA NPV8% (base)</div><div class="metric-value">US$1.25B</div></div>
+<div class="metric metric-rows-card"><div class="metric-label">Luanga Resources</div><div class="mrow"><span>M&amp;I PdEq</span><b>10.4 Moz</b></div><div class="mrow"><span>Inferred PdEq</span><b>5.0 Moz</b></div><div class="mrow"><span>M&amp;I tonnes</span><b>158 Mt</b></div><div class="mrow"><span>Grade (M&amp;I)</span><b>2.04 g/t PdEq</b></div><div class="mrow"><span>Inferred tonnes</span><b>78 Mt</b></div></div>
+</div><div class="bullets hl"><div class="bullets-title">Investment highlights</div><ul><li>Large, high-grade PGM+Au+Ni resource: 10.4 Moz PdEq M&amp;I (158 Mt @ 2.04 g/t) + 5.0 Moz PdEq Inferred (78 Mt @ 2.01 g/t) at 100%-owned Luanga, Carajas, Brazil — one of few large-scale PGM sources outside geopolitically challenged regions.</li><li>Robust PEA (Aug-2025): after-tax NPV(8%) US$1.25B (base, concentrate sales) / US$1.86B (alternate, vertical integration); IRR ~49%; payback 2.4 yrs; 17-year mine life; initial capex US$495.8M.</li><li>Exceptional infrastructure: low-cost hydro power (US$0.10/kWh), paved highways, rail, port, skilled workforce; anchor project in the Barcarena Export Processing Zone (ZPE).</li><li>Strong treasury: US$94.1M cash (Jun-2026) after H1-2026 raises (~C$115M gross); near-zero debt; well-funded through PFS/FS and initial works.</li><li>High insider alignment (Board/Management 42.7%) and backing by 39 institutional investors; experienced Brazil PGM/nickel team (ex-Avanco / OZ Minerals, Anglo Platinum, Vale).</li></ul></div><div class="bullets rk"><div class="bullets-title">Key risks</div><ul><li>Pre-production developer; PEA is preliminary (no reserves) — economics depend on PGM price decks and the unproven vertical-integration case.</li><li>Single-asset concentration (Luanga) in Brazil; permitting/social licensing and the Installation Licence (LI) application pending completion of the PFS.</li><li>PFS/FS execution risk and potential capex escalation on a ~US$593M base-case project advancing from PEA.</li><li>PGM price volatility (Pd, Pt, Rh) and BRL/USD FX exposure; nickel/copper by-product credits uncertain.</li><li>Related-party concentration: CEO/Chairman Luis Azevedo and affiliated entities bill the company; key-person and governance risk.</li></ul></div><div class="bullets ct"><div class="bullets-title">Near-term catalysts</div><ul><li>Pre-Feasibility Study delivery targeted Q3 2026, followed by the Installation Licence (LI) application.</li><li>Updated Mineral Resource Estimate targeted Q1 2027; Definitive Feasibility Study targeted Q3 2027.</li><li>Ongoing PGM infill + extensional drilling (completion Q3 2026) and a new copper-gold (IOCG) drill program from Q4 2026.</li><li>Metallurgical optimization (Jameson Cell) and offtake/marketing progress toward development.</li><li>Resource-growth potential at the Babylon magmatic Ni-Cu-PGM target (high-grade intercepts reported Aug/May 2026).</li></ul></div></div>
+    </section>
+    <section id="map" class="sec">
+      <div class="sec-head"><span class="sec-no">&bull;</span>Project Map</div>
+      <div class="sec-body"><div id="map"></div></div>
+    </section>
+    <section id="overview" class="sec"><div class="sec-head"><span class="sec-no">1</span>Overview</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Bravo Mining is a Canadian- (BC) and Brazil-based mineral exploration &amp; development company advancing its 100%-owned Luanga PGM + Au + Ni Project in the Carajas Mineral Province, Para, Brazil.</li><li>Luanga is a multi-million-ounce, Tier-1 PGM + Au + Ni deposit — one of the few large-scale sources of these critical metals outside geopolitically challenged regions, with outstanding infrastructure.</li><li>Following the 2025 MRE and PEA, Bravo is advancing toward a Pre-Feasibility Study (PFS) targeted for Q3 2026, with a DFS targeted Q3 2027; it is also opening a copper-gold (IOCG) exploration frontier in Carajas.</li></ul></div><div class="sub-h">Asset &amp; strategy</div><div class="bullets plain"><div class="bullets-title"></div><ul><li>Luanga (100%): PGM+Au+Ni open-pit; Vale retained a 1% NSR; BNDES holds a 2% royalty on platinum-concentrate net revenue.</li><li>Copper-Gold (IOCG) division led by ex-Vale exploration director; early-stage Carajas copper-gold exploration with no resource yet.</li></ul></div></div></section>
+    <section id="assets" class="sec"><div class="sec-head"><span class="sec-no">2</span>Core Assets</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Single core asset (Luanga) plus an early-stage copper-gold exploration initiative; resource/rank detail below. All figures from NI 43-101 (MRE Apr-2025; PEA Aug-2025).</li></ul></div><div class="proj-list">
+<div class='li-row'><b>Luanga PGM+Au+Ni (100%)</b><div class="li-note">M&amp;I 158 Mt @ 2.04 g/t PdEq (10.4 Moz); Inferred 78 Mt @ 2.01 g/t PdEq (5.0 Moz). 17-yr open-pit PEA; NPV8% US$1.25B base / US$1.86B alternate; initial capex US$495.8M.</div></div>
+<div class='li-row'><b>Copper-Gold (IOCG) — Carajas</b><div class="li-note">New copper-gold division targeting IOCG systems in the Carajas corridor. No resource yet; drilling planned from Q4 2026.</div></div>
+</div><div class="chart-wrap"><div class="chart-cap">Contained metal by project</div><svg viewBox="0 0 680 300" width="100%" class="chart">
+<line x1="55" y1="20" x2="55" y2="244" stroke="#e3e6ea"/>
+<line x1="55" y1="244" x2="660" y2="244" stroke="#e3e6ea"/>
+<rect x="157.9" y="20.0" width="197.7" height="224.0" rx="3" fill="#1f6feb"/>
+<text x="257.7" y="15.0" text-anchor="middle" class="cval">158</text>
+<text x="257.7" y="258" text-anchor="middle" class="clab">M&amp;I</text>
+<rect x="357.5" y="133.4" width="197.7" height="110.6" rx="3" fill="#27ae60"/>
+<text x="457.3" y="128.4" text-anchor="middle" class="cval">78</text>
+<text x="457.3" y="258" text-anchor="middle" class="clab">Inferred</text>
+<text x="357.5" y="276" text-anchor="middle" class="clab" font-weight="700">Luanga (Mt)</text>
+</svg></div></div></section>
+    <section id="financials" class="sec"><div class="sec-head"><span class="sec-no">3</span>Financials &amp;amp; Capital Structure</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>As of Jun-30-2026 (USD): cash US$94.1M (up from US$20.0M at Dec-31-2025); total assets US$138.7M; total liabilities only US$2.1M; shareholders&#x27; equity US$136.7M.</li><li>Near-zero debt (only lease liabilities ~US$0.46M). H1-2026 net loss just US$1.07M — low burn for an exploration-stage developer.</li><li>H1-2026 financings: Jan-20 public offering 19.61M sh @ C$4.40 (C$86.3M gross) + Apr-6 private placement 7.01M sh @ C$4.07 (C$28.5M gross) = ~C$115M gross (net ~C$108M). S/O 137.06M; options 9.43M; fully diluted ~144.3M.</li><li>Pro-forma cash ~US$97M (Apr-2026). Royalties: Vale 1% NSR; BNDES 2% on Pt-concentrate net revenue.</li><li>Share structure (May-2026): 137.05M basic; 7.25M options; 144.3M fully diluted. Supported by 39 institutional investors (corporate presentation).</li></ul></div><div class="chart-wrap"><div class="chart-cap">Shareholder structure</div><svg viewBox="0 0 385 210" width="100%" class="chart donut">
+<circle cx="105" cy="105" r="72" fill="none" stroke="#eef2f7" stroke-width="22"/>
+<circle cx="105" cy="105" r="72" fill="none" stroke="#1f6feb" stroke-width="22" stroke-dasharray="193.2 259.2" stroke-dashoffset="0.0" transform="rotate(-90 105 105)"/>
+<circle cx="105" cy="105" r="72" fill="none" stroke="#27ae60" stroke-width="22" stroke-dasharray="259.2 193.2" stroke-dashoffset="-193.2" transform="rotate(-90 105 105)"/>
+<text x="105" y="101" text-anchor="middle" class="clab" font-size="13" font-weight="700">Ownership</text>
+<text x="105" y="119" text-anchor="middle" class="cval" font-size="15">100%</text>
+<rect x="232" y="30" width="11" height="11" rx="2" fill="#1f6feb"/>
+<text x="250" y="40" class="clab">Board &amp; Management 42.7%</text>
+<rect x="232" y="52" width="11" height="11" rx="2" fill="#27ae60"/>
+<text x="250" y="62" class="clab">Other (institutional &amp; retail) 57.3%</text>
+</svg></div></div></section>
+    <section id="management" class="sec"><div class="sec-head"><span class="sec-no">4</span>Management &amp;amp; Board</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Led by Executive Chairman &amp; CEO Luis Azevedo (ex-Avanco, co-founder of the Brazilian Mining Prospectors Association); deep Brazil mining-code expertise. Strong Brazil PGM/nickel team (ex-Avanco, Anglo Platinum, Vale).</li></ul></div><div class="people-list">
+<div class='li-row'><b>Luis Azevedo</b> <span class="tag">Executive Chairman &amp; CEO</span></div>
+<div class='li-row'><b>Simon Mottram</b> <span class="tag">President</span></div>
+<div class='li-row'><b>Manoel Carlos Cerqueira</b> <span class="tag">CFO</span></div>
+<div class='li-row'><b>Paulo Ilidio de Brito</b> <span class="tag">VP Exploration (QP)</span></div>
+<div class='li-row'><b>Heinrich Muller</b> <span class="tag">VP Technical Services</span></div>
+<div class='li-row'><b>Alex Penha</b> <span class="tag">EVP Corporate Development</span></div>
+<div class='li-row'><b>Fabio Masotti</b> <span class="tag">Leader, Copper-Gold Division</span></div>
+<div class='li-row'><b>Anthony (Tony) Polglase</b> <span class="tag">Lead Director</span></div>
+<div class='li-row'><b>Margot Naudie</b> <span class="tag">Director</span></div>
+<div class='li-row'><b>Stephen Quin</b> <span class="tag">Independent Director</span></div>
+</div></div></section>
+    <section id="profile" class="sec"><div class="sec-head"><span class="sec-no">5</span>Company Profile</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Incorporated Jan-2022 (BC) as BPGM/Bravo; TSX-V IPO Jul-21-2022 @ C$1.75. Head office Rio de Janeiro; registered office Vancouver.</li><li>Acquired 100% of Luanga from Vale (agreement Oct-2020; transferred Nov-2021); Vale retained a 1% NSR.</li></ul></div><div class="ms-list">
+<div class='li-row'><b>Oct-2020</b> &mdash; Agreed to acquire Luanga from Vale</div>
+<div class='li-row'><b>Jul-2022</b> &mdash; TSX-V IPO @ C$1.75</div>
+<div class='li-row'><b>Apr-2025</b> &mdash; Updated MRE (10.4 Moz PdEq M&amp;I)</div>
+<div class='li-row'><b>Aug-2025</b> &mdash; PEA released (NPV8% US$1.25B base)</div>
+<div class='li-row'><b>Jan-2026</b> &mdash; Equity raises ~C$115M gross (public + private)</div>
+<div class='li-row'><b>Q3-2026</b> &mdash; Pre-Feasibility Study targeted</div>
+<div class='li-row'><b>Q1-2027</b> &mdash; Updated MRE targeted</div>
+<div class='li-row'><b>Q3-2027</b> &mdash; Definitive FS targeted</div>
+</div></div></section>
+    <section id="news" class="sec"><div class="sec-head"><span class="sec-no">6</span>Latest News</div><div class="sec-body"><div class="timeline">
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-08-24</div><details class="tl-body"><summary>High-grade magmatic sulphide Ni/Cu-PGM at Babylon</summary><div class="tl-sum">Assay results from the Babylon target adjacent to the Luanga North Sector confirm high-grade magmatic Ni-Cu-PGM sulphide mineralization, expanding the exploration frontier. <a href="https://bravomining.com/investors/news-releases/bravo-intercepts-high-grade-magmatic-sulphide-ni-cu-pgm-mineralization-at-luanga/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-08-11</div><details class="tl-body"><summary>Expanded metallurgical results; PFS workstream update</summary><div class="tl-sum">Jameson Cell metallurgical testwork returns encouraging results; PFS on track for Q3 2026, followed by the LI application, updated MRE (Q1 2027) and DFS (Q3 2027); copper-gold drilling from Q4 2026. <a href="https://bravomining.com/investors/news-releases/bravo-mining-reports-expanded-metallurgical-results-and-provides-workstream-update/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-07-06</div><details class="tl-body"><summary>51m at 3.7 g/t PGM+Au + 0.33% Ni at Luanga</summary><div class="tl-sum">Twelve Central Sector holes and one Crescent Zone hole returned 51m @ 3.7 g/t PGM+Au + 0.33% Ni, including 23m @ 5.6 g/t PGM+Au + 0.44% Ni. <a href="https://bravomining.com/investors/news-releases/bravo-intercepts-51m-at-3.7-g-t-pgm-au-0.33-ni-including-23m-at-5.6-g-t-pgm-au-0.44-ni-at-luanga/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-06-05</div><details class="tl-body"><summary>AGM voting results; stock options grant</summary><div class="tl-sum">Shareholders approved all items at the AGM; company granted stock options as part of its incentive plan. <a href="https://bravomining.com/investors/news-releases/bravo-announces-voting-results-of-agm-and-stock-options-grant/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-05-19</div><details class="tl-body"><summary>High-grade magmatic sulphide Ni/Cu-PGM at Babylon</summary><div class="tl-sum">Babylon target returns high-grade magmatic sulphide mineralization with significantly higher Ni and Cu grades than the stratiform Luanga PGM resource, suggesting a separate Ni-Cu-PGM system. <a href="https://bravomining.com/investors/news-releases/bravo-intercepts-high-grade-magmatic-sulphide-ni-cu-pgm-mineralization/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-05-05</div><details class="tl-body"><summary>Infill and extensional drill results from Luanga</summary><div class="tl-sum">Company reports infill and extensional drilling results supporting resource confidence and extension of the Luanga mineralization. <a href="https://bravomining.com/investors/news-releases/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-04-06</div><details class="tl-body"><summary>Private placement closed (C$28.5M)</summary><div class="tl-sum">Closed a private placement of 7,010,294 common shares at C$4.07, generating gross proceeds of C$28.5M to fund ongoing work programs. <a href="https://bravomining.com/investors/news-releases/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-01-20</div><details class="tl-body"><summary>Public offering closed (C$86.3M)</summary><div class="tl-sum">Closed a public offering of 19,607,500 common shares at C$4.40, generating gross proceeds of C$86.3M to fund the PFS and exploration. <a href="https://bravomining.com/investors/news-releases/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2025-08-07</div><details class="tl-body"><summary>PEA released (NPV8% US$1.25B)</summary><div class="tl-sum">Independent PEA outlines a 17-year open-pit operation with after-tax NPV(8%) of US$1.25B (base) and US$1.86B (alternate vertical-integration case); IRR ~49%. <a href="https://bravomining.com/investors/news-releases/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2025-04-02</div><details class="tl-body"><summary>Updated Mineral Resource Estimate released</summary><div class="tl-sum">Updated MRE lifts Luanga to 10.4 Moz PdEq M&amp;I (158 Mt @ 2.04 g/t) and 5.0 Moz PdEq Inferred (78 Mt @ 2.01 g/t), with 67% of the MRE in the M&amp;I category. <a href="https://bravomining.com/investors/news-releases/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+</div></div></section>
+  </main>
+</div>
+<footer class="ft">
+  Source: official website &middot; AI interpretation of public filings (figures cited from source) &middot;
+  Generated 2026-08-25 &middot; Mineral resources are not mineral reserves and have not demonstrated economic viability
+  (NI 43-101). &middot; <a href="../index.html">&larr; Back to Dashboard</a>
+</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  var mines = [{"name": "Luanga", "lat": -5.93819, "lng": -49.55793}];
+  var arr = Array.isArray(mines) ? mines : (mines ? [mines] : []);
+  if(arr.length){
+    var map = L.map('map').setView([arr[0].lat, arr[0].lng], 5);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:16, attribution:'Tiles &copy; Esri'}).addTo(map);
+    arr.forEach(function(m){
+      L.circleMarker([m.lat, m.lng], {radius:8, color:'#1f6feb', fillColor:'#1f6feb', fillOpacity:.85})
+        .addTo(map).bindPopup('<b>'+(m.name||'Project')+'</b>');
+    });
+  }
+})();
+</script>
+</body>
+</html>
