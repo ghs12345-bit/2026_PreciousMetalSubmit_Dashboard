@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Precious Metals Summit 2026 · Mining Dashboard</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<style>
+  :root{
+    --bg:#f5f6f8; --panel:#ffffff; --line:#e3e6ea; --ink:#1f2733; --muted:#6b7480;
+    --accent:#1f6feb; --header:#1c2534; --header-ink:#eaf0f7;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;
+       background:var(--bg);color:var(--ink);display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+  /* header */
+  header{height:52px;background:var(--header);color:var(--header-ink);display:flex;align-items:center;
+         padding:0 18px;gap:22px;flex:0 0 auto;}
+  .brand{font-weight:700;font-size:16px;letter-spacing:.3px;white-space:nowrap;}
+  .brand small{font-weight:400;color:#9fb0c4;margin-left:8px;font-size:12px;}
+  nav{display:flex;gap:4px;margin-left:auto;}
+  .tab{background:transparent;border:none;color:#c6d2e0;padding:8px 16px;font-size:14px;cursor:pointer;
+       border-radius:6px;font-weight:500;}
+  .tab:hover{background:rgba(255,255,255,.08);}
+  .tab.active{background:var(--accent);color:#fff;}
+  .badge{color:#9fb0c4;font-size:12px;white-space:nowrap;}
+
+  main{flex:1 1 auto;position:relative;overflow:hidden;}
+  .panel{position:absolute;inset:0;display:none;}
+  .panel.active{display:flex;}
+
+  /* ===== Tab1 map ===== */
+  #panel-map{flex-direction:row;}
+  #mapwrap{flex:1 1 auto;position:relative;min-width:0;}
+  #map{position:absolute;inset:0;background:#d7dee5;}
+  #legend{position:absolute;right:12px;bottom:12px;z-index:800;background:rgba(255,255,255,.94);
+          border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+  #legend .lg-title{font-weight:600;margin-bottom:6px;}
+  #legend .lg-row{display:flex;align-items:center;gap:6px;line-height:1.9;}
+  #legend .lg-dot{width:11px;height:11px;border-radius:50%;display:inline-block;border:1px solid #fff;}
+  #cluster-toggle{position:absolute;top:12px;right:12px;z-index:800;background:rgba(255,255,255,.94);
+                  border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;
+                  display:flex;align-items:center;gap:5px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.12);}
+  #cluster-toggle input{margin:0;cursor:pointer;accent-color:var(--accent);}
+
+  /* sidebar */
+  #sidebar{width:300px;flex:0 0 300px;background:var(--panel);border-left:1px solid var(--line);
+           display:flex;flex-direction:column;overflow:hidden;}
+  #sidebar .sb-head{padding:12px 14px;border-bottom:1px solid var(--line);font-weight:600;font-size:14px;
+                    flex:0 0 auto;}
+
+  /* 当前筛选条件框 chips */
+  #sb-filter{flex:0 0 auto;max-height:118px;overflow-y:auto;padding:8px 10px;border-bottom:1px solid var(--line);
+             background:#fbfcfe;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  #sb-filter .empty{font-size:12px;color:var(--muted);}
+  #sb-filter .chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:12px;
+             font-size:12px;color:#fff;max-width:100%;}
+  #sb-filter .chip .tag{font-size:10px;opacity:.85;background:rgba(255,255,255,.25);border-radius:3px;padding:0 3px;}
+  #sb-filter .chip .x{cursor:pointer;font-weight:700;opacity:.85;padding:0 2px;}
+  #sb-filter .chip .x:hover{opacity:1;}
+  #sb-filter .chip.c-continent{background:#1f6feb;}
+  #sb-filter .chip.c-country{background:#27ae60;}
+  #sb-filter .chip.c-company{background:#e67e22;}
+  #sb-filter .chip.c-mine{background:#8e44ad;}
+  #sb-filter .clear-all{font-size:12px;color:var(--accent);cursor:pointer;white-space:nowrap;}
+  #sb-list{flex:1 1 auto;overflow-y:auto;padding:4px 0;}
+
+  /* 大洲层 */
+  .continent-group{border-bottom:1px solid var(--line);}
+  .continent-head{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#f3f6fa;font-size:13px;}
+  .continent-head .lbl{flex:1 1 auto;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-weight:700;}
+  .continent-head .lbl:hover{color:var(--accent);}
+  .continent-head.active .lbl{color:var(--accent);}
+  .continent-head .cnt{color:var(--muted);font-weight:400;font-size:12px;}
+  .arrow{color:var(--muted);cursor:pointer;padding:0 2px;transition:transform .15s;flex:0 0 auto;}
+  .arrow:hover{color:var(--ink);}
+  .continent-group.collapsed .countries{display:none;}
+  .continent-group.collapsed > .continent-head .arrow{transform:rotate(-90deg);}
+
+  /* 国家层 */
+  .countries{list-style:none;margin:0;padding:0;}
+  .country-head{display:flex;align-items:center;gap:6px;padding:6px 10px 6px 20px;font-size:12.5px;}
+  .country-head .lbl{flex:1 1 auto;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-weight:600;}
+  .country-head .lbl:hover{color:var(--accent);}
+  .country-head.active .lbl{color:var(--accent);}
+  .country-head .cnt{color:var(--muted);font-weight:400;font-size:12px;}
+  .country-group{border-bottom:1px solid #f0f2f5;}
+  .country-group.collapsed .co-list{display:none;}
+  .country-group.collapsed > .country-head .arrow{transform:rotate(-90deg);}
+
+  /* 公司层 */
+  .co-list{list-style:none;margin:0;padding:0;}
+  .company-group{border-bottom:1px solid #f4f6f8;}
+  .company-head{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 20px;font-size:12.5px;}
+  .company-head .lbl{flex:1 1 auto;cursor:pointer;display:flex;align-items:center;justify-content:space-between;}
+  .company-head .lbl:hover{color:var(--accent);}
+  .company-head.active .lbl{color:var(--accent);font-weight:600;}
+  .company-head .cnt{color:var(--muted);font-size:12px;}
+  /* 公司名=打开 HTML 链接；复选框=地图筛选（两者操作隔离） */
+  .co-filter-cb{flex:0 0 auto;margin:0;cursor:pointer;accent-color:var(--accent);width:14px;height:14px;}
+  .company-head .co-name-link{flex:1 1 auto;display:flex;align-items:center;justify-content:space-between;
+           color:var(--accent);text-decoration:none;cursor:pointer;font-weight:500;}
+  .company-head .co-name-link:hover{text-decoration:underline;}
+  .company-group.collapsed .mine-list{display:none;}
+  .company-group.collapsed > .company-head .arrow{transform:rotate(-90deg);}
+  /* 矿层（checkbox 多选） */
+  .mine-list{list-style:none;margin:0;padding:0;}
+  .mine-item{padding:2px 10px 2px 34px;font-size:12px;}
+  .mine-item label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--ink);}
+  .mine-item input{margin:0;cursor:pointer;accent-color:var(--accent);}
+  .mine-item:hover{background:#f0f6ff;}
+  .co-link{flex:0 0 auto;color:var(--accent);text-decoration:none;font-size:13px;font-weight:700;
+           padding:0 4px;border-radius:4px;}
+  .co-link:hover{background:var(--accent);color:#fff;}
+  .co-link.pending{color:#b7bec7;cursor:not-allowed;}
+  #sb-empty{padding:20px;color:var(--muted);font-size:13px;text-align:center;}
+
+  /* ===== Tab2/3 table ===== */
+  #panel-mines,#panel-companies{flex-direction:column;background:var(--panel);}
+  .tbl-toolbar{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;
+               align-items:center;flex:0 0 auto;}
+  .tbl-toolbar input,.tbl-toolbar select{padding:7px 10px;border:1px solid var(--line);border-radius:6px;
+       font-size:13px;background:#fff;color:var(--ink);}
+  .tbl-toolbar input{width:220px;}
+  .tbl-toolbar .spacer{flex:1 1 auto;}
+  .tbl-toolbar .hint{color:var(--muted);font-size:12px;}
+  .tbl-wrap{flex:1 1 auto;overflow:auto;position:relative;}
+  table.data-table{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap;}
+  table.data-table thead th{position:sticky;top:0;background:#f3f5f8;border-bottom:2px solid var(--line);
+       padding:9px 12px;text-align:left;cursor:pointer;user-select:none;z-index:2;font-weight:600;}
+  table.data-table thead th:hover{background:#e9eef5;}
+  table.data-table tbody td{padding:7px 12px;border-bottom:1px solid var(--line);}
+  table.data-table tbody tr:hover{background:#f4f8ff;}
+  .num{text-align:right;font-variant-numeric:tabular-nums;}
+  a.ext{color:var(--accent);text-decoration:none;}
+  a.ext:hover{text-decoration:underline;}
+  .stage-chip{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;background:#eef2f7;color:#445;}
+  .comm-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+  .mine-dot{width:12px;height:12px;border-radius:50%;border:1.5px solid #fff;box-sizing:border-box;box-shadow:0 0 2px rgba(0,0,0,.3);}
+
+  /* popup */
+  .pp{font-size:13px;min-width:240px;max-width:300px;}
+  .pp h3{margin:0 0 8px;font-size:15px;border-bottom:1px solid var(--line);padding-bottom:6px;}
+  .pp .pp-sec{margin:8px 0;font-weight:600;color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:.4px;}
+  .pp table{width:100%;border-collapse:collapse;}
+  .pp td{padding:3px 0;vertical-align:top;}
+  .pp td.k{color:var(--muted);padding-right:10px;white-space:nowrap;width:88px;}
+  .pp a{color:var(--accent);}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Precious Metals Summit 2026<small>Mining Investment Dashboard</small></div>
+  <nav>
+    <button class="tab active" data-tab="map">World Map</button>
+    <button class="tab" data-tab="mines">Mines Table</button>
+    <button class="tab" data-tab="companies">Companies Table</button>
+  </nav>
+  <div class="badge" id="badge"></div>
+</header>
+
+<main>
+  <!-- ============ Tab 1: Map ============ -->
+  <div class="panel active" id="panel-map">
+    <div id="mapwrap">
+      <div id="map"></div>
+      <div id="legend"></div>
+      <label id="cluster-toggle"><input type="checkbox" id="cluster-check"> Cluster points</label>
+    </div>
+    <div id="sidebar">
+      <div class="sb-head"><span>By Continent · Country · Company</span></div>
+      <div id="sb-filter"></div>
+      <div id="sb-list"></div>
+    </div>
+  </div>
+
+  <!-- ============ Tab 2: Mines table ============ -->
+  <div class="panel" id="panel-mines">
+    <div class="tbl-toolbar">
+      <input id="mine-search" type="text" placeholder="Search mine / company / country…">
+      <select id="mine-commodity"><option value="">All commodities</option></select>
+      <select id="mine-country"><option value="">All countries</option></select>
+      <select id="mine-company"><option value="">All companies</option></select>
+      <span class="spacer"></span>
+      <span class="hint" id="mine-hint"></span>
+    </div>
+    <div class="tbl-wrap"><table class="data-table" id="mine-table"></table></div>
+  </div>
+
+  <!-- ============ Tab 3: Companies table ============ -->
+  <div class="panel" id="panel-companies">
+    <div class="tbl-toolbar">
+      <input id="co-search" type="text" placeholder="Search company…">
+      <span class="spacer"></span>
+      <span class="hint" id="co-hint"></span>
+    </div>
+    <div class="tbl-wrap"><table class="data-table" id="co-table"></table></div>
+  </div>
+</main>
+
+<script src="data.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+(function(){
+  const D = window.DASHBOARD_DATA;
+  const mines = D.mines, companies = D.companies, colors = D.colors;
+  const generated = new Set(D.generatedCompanies || []);
+  const colorOf = c => colors[c] || "#8a949e";
+
+  // ---------- 七大洲映射（标准惯例）----------
+  const CONTINENTS = {
+    "Canada":"North America","USA":"North America","Mexico":"North America","Jamaica":"North America",
+    "Peru":"South America","Chile":"South America","Argentina":"South America","Brazil":"South America","Bolivia":"South America","Colombia":"South America",
+    "Sweden":"Europe","Norway":"Europe","Spain":"Europe","Russia":"Europe",
+    "Mongolia":"Asia","Kazakhstan":"Asia","Saudi Arabia":"Asia","Türkiye":"Asia",
+    "Mozambique":"Africa","Namibia":"Africa","Zambia":"Africa","Gabon":"Africa","Cameroon":"Africa",
+    "Eritrea":"Africa","Tanzania":"Africa","Ethiopia":"Africa","Egypt":"Africa",
+    "Papua New Guinea":"Oceania","Australia":"Oceania",
+  };
+  const continentOf = c => CONTINENTS[c] || "Other";
+  mines.forEach(m=>{ m.continent = continentOf(m.country); });
+
+  // ---------- 通用 ----------
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+  function fmt(v){ if(v==null||v==="") return "—"; if(typeof v==="number") return v.toLocaleString("en-US",{maximumFractionDigits:2}); return v; }
+
+  // badge
+  const countries = new Set(mines.map(m=>m.country).filter(Boolean));
+  document.getElementById("badge").textContent =
+    `${mines.length} mines · ${companies.length} companies · ${countries.size} countries`;
+
+  // ---------- Tab 切换 ----------
+  const tabs = document.querySelectorAll(".tab");
+  const panels = { map:document.getElementById("panel-map"), mines:document.getElementById("panel-mines"), companies:document.getElementById("panel-companies") };
+  tabs.forEach(t=>t.addEventListener("click", ()=>{
+    tabs.forEach(x=>x.classList.remove("active")); t.classList.add("active");
+    Object.values(panels).forEach(p=>p.classList.remove("active"));
+    panels[t.dataset.tab].classList.add("active");
+    if(t.dataset.tab==="map" && map) setTimeout(()=>map.invalidateSize(), 50);
+  }));
+
+  // ================= 地图 =================
+  let map = null, markers = {}, activeGroup = null, clustering = false;
+  const selected = [];   // [{type:'continent'|'country'|'company', label}]
+
+  function popupHTML(m){
+    const rows = (pairs)=>{
+      let html = "";
+      pairs.forEach(([k,v])=>{ if(v!=null && v!=="") html += `<tr><td class="k">${k}</td><td>${esc(v)}</td></tr>`; });
+      return html;
+    };
+    let h = `<div class="pp"><h3>${esc(m.propName)}</h3>`;
+    h += `<div class="pp-sec">Basic Info</div><table>${rows([
+      ["Country", m.country], ["State/Province", m.stateProvince], ["Primary Commodity", m.commodity],
+      ["Development Stage", m.devStage], ["Activity Status", m.actvStatus]])}</table>`;
+    h += `<div class="pp-sec">Ownership</div><table>${rows([
+      ["Owner Name", m.ownerName], ["Owner Type", m.ownerType], ["List of Owners", m.ownerList]])}</table>`;
+    h += `<div class="pp-sec">Resources / Grade</div><table>${rows([
+      ["Au Grade (g/t)", fmt(m.grdAuTotal)], ["Au Contained (oz)", fmt(m.containedAuTotal)],
+      ["Cu Grade (%)", fmt(m.grdCuTotal)], ["Cu Contained (t)", fmt(m.containedCuTotal)]])}</table>`;
+    h += `<div class="pp-sec">Commodities / Location</div><table>${rows([
+      ["Commodities", m.commoditiesList], ["Coordinates", (m.lat!=null&&m.lng!=null)?`${m.lat.toFixed(4)}, ${m.lng.toFixed(4)}`:""],
+      ["Location Comments", m.locationComments]])}</table>`;
+    h += `</div>`;
+    return h;
+  }
+
+  function makeIcon(m){
+    return L.divIcon({
+      className: "mine-dot-wrap",
+      html: `<div class="mine-dot" style="background:${colorOf(m.commodity)}"></div>`,
+      iconSize: [12, 12], iconAnchor: [6, 6], popupAnchor: [0, -6]
+    });
+  }
+
+  // 散点模式下，对坐标过近（<~4km）的点做圆周偏移，避免重叠遮挡
+  function layoutPoints(){
+    const placed = [];
+    return mines.map(m=>{
+      let lat = m.lat, lng = m.lng;
+      if(!clustering && lat!=null && lng!=null){
+        let nearest = null, minD = Infinity;
+        for(const p of placed){
+          const d = (p.lat-lat)*(p.lat-lat) + (p.lng-lng)*(p.lng-lng);
+          if(d < minD){ minD = d; nearest = p; }
+        }
+        if(nearest && minD < 0.0013){   // ~0.036° ≈ 4 km
+          const angle = nearest.count * (2*Math.PI/8);
+          nearest.count += 1;
+          const r = 0.03;               // ~3.3 km 偏移半径
+          const dlat = r * Math.cos(angle);
+          const dlng = r * Math.sin(angle) / Math.max(0.3, Math.cos(lat*Math.PI/180));
+          lat += dlat; lng += dlng;
+        }
+      }
+      placed.push({lat: lat, lng: lng, count: 1});
+      return [lat, lng];
+    });
+  }
+
+  function buildMapMarkers(){
+    if(activeGroup) map.removeLayer(activeGroup);
+    markers = {};
+    activeGroup = clustering
+      ? L.markerClusterGroup({ showCoverageOnHover:false, maxClusterRadius:45, spiderfyOnMaxZoom:true, zoomToBoundsOnClick:true })
+      : L.layerGroup();
+    activeGroup.addTo(map);
+    const pts = layoutPoints();
+    mines.forEach((m, i)=>{
+      if(m.lat==null || m.lng==null) return;
+      const mk = L.marker(pts[i], { icon: makeIcon(m) }).bindPopup(popupHTML(m));
+      activeGroup.addLayer(mk);
+      markers[m.propName] = mk;
+    });
+  }
+
+  function initMap(){
+    map = L.map("map", { worldCopyJump:true }).setView([20, 0], 2);
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", {
+      attribution: "Esri, OpenStreetMap contributors", maxZoom: 16
+    }).addTo(map);
+    buildMapMarkers();
+  }
+
+  function onCompanyLink(e, slug){
+    if(generated.has(slug)) return; // published → normal navigation
+    e.preventDefault();
+    alert("Company page not published yet.");
+  }
+
+  // ---------- 图例 ----------
+  function buildLegend(){
+    const el = document.getElementById("legend");
+    const counts = {};
+    mines.forEach(m=>counts[m.commodity]=(counts[m.commodity]||0)+1);
+    const order = Object.keys(colors).filter(c=>counts[c]);
+    let h = `<div class="lg-title">Primary Commodity</div>`;
+    order.forEach(c=>{
+      h += `<div class="lg-row"><span class="lg-dot" style="background:${colors[c]}"></span>${esc(c)} <span style="color:#999">${counts[c]}</span></div>`;
+    });
+    el.innerHTML = h;
+  }
+
+  // ---------- 右侧列表栏（大洲 → 国家 → 公司）----------
+  function buildSidebar(){
+    const byCont = {};
+    mines.forEach(m=>{
+      const co = m.continent || "Other";
+      const ct = m.country || "Unknown";
+      const cp = m.companyName || "Unknown";
+      (byCont[co] = byCont[co] || new Map());
+      if(!byCont[co].has(ct)) byCont[co].set(ct, new Map());
+      const cMap = byCont[co].get(ct);
+      cMap.set(cp, (cMap.get(cp)||0)+1);
+    });
+    const sumMap = mp => { let t=0; mp.forEach(n=>t+=n); return t; };
+    const sumCountry = cmap => { let t=0; cmap.forEach(cc=>cc.forEach(n=>t+=n)); return t; };
+    const contOrder = Object.keys(byCont).sort((a,b)=>{
+      return sumCountry(byCont[b]) - sumCountry(byCont[a]) || a.localeCompare(b);
+    });
+    let h = "";
+    contOrder.forEach(co=>{
+      const cmap = byCont[co];
+      const countryOrder = Array.from(cmap.keys()).sort((a,b)=>{
+        return sumMap(cmap.get(b)) - sumMap(cmap.get(a)) || a.localeCompare(b);
+      });
+      h += `<div class="continent-group collapsed">` +
+           `<div class="continent-head">` +
+           `<span class="arrow" data-act="toggle" data-type="continent" data-label="${esc(co)}">▾</span>` +
+           `<span class="lbl" data-act="filter" data-type="continent" data-label="${esc(co)}">` +
+           `<span>${esc(co)}</span><span class="cnt">${countryOrder.length} countries · ${sumCountry(cmap)} mines</span></span></div>` +
+           `<ul class="countries">`;
+      countryOrder.forEach(ct=>{
+        const ccMap = cmap.get(ct);
+        const companies = Array.from(ccMap.keys()).sort();
+        h += `<li class="country-group collapsed">` +
+             `<div class="country-head">` +
+             `<span class="arrow" data-act="toggle" data-type="country" data-label="${esc(ct)}">▾</span>` +
+             `<span class="lbl" data-act="filter" data-type="country" data-label="${esc(ct)}">` +
+             `<span>${esc(ct)}</span><span class="cnt">${companies.length} companies · ${sumMap(ccMap)} mines</span></span></div>` +
+             `<ul class="co-list">`;
+        companies.forEach(cp=>{
+          const slug = slugOf(cp);
+          const mineList = mines.filter(x=>x.companyName===cp && x.country===ct).map(x=>x.propName).sort();
+          h += `<li class="company-group collapsed">` +
+               `<div class="company-head">` +
+               `<span class="arrow" data-act="toggle" data-type="company" data-label="${esc(cp)}">▾</span>` +
+               `<input type="checkbox" class="co-filter-cb" data-act="company-filter" data-type="company" data-label="${esc(cp)}" title="Filter map by this company">` +
+               `<a class="co-name-link" data-slug="${esc(slug)}" href="companies/${esc(slug)}.html" target="_blank" rel="noopener">${esc(cp)}<span class="cnt">${ccMap.get(cp)}</span></a>` +
+               `</div>` +
+               `<ul class="mine-list">`;
+          mineList.forEach(mn=>{
+            h += `<li class="mine-item"><label>` +
+                 `<input type="checkbox" data-act="mine" data-type="mine" data-label="${esc(mn)}">` +
+                 `<span>${esc(mn)}</span></label></li>`;
+          });
+          h += `</ul></li>`;
+        });
+        h += `</ul></li>`;
+      });
+      h += `</ul></div>`;
+    });
+    document.getElementById("sb-list").innerHTML = h || `<div id="sb-empty">No data</div>`;
+
+    // 事件委托：箭头展开/收起，名称筛选，公司链接，矿 checkbox
+    const listEl = document.getElementById("sb-list");
+    listEl.onclick = function(e){
+      const link = e.target.closest(".co-name-link, .co-link");
+      if(link){
+        const slug = link.dataset.slug;
+        if(!generated.has(slug)){ e.preventDefault(); alert("Company page not published yet."); }
+        e.stopPropagation();
+        return;
+      }
+      const el = e.target.closest("[data-act]");
+      if(!el) return;
+      if(el.dataset.act === "toggle"){
+        if(el.dataset.type === "continent") el.closest(".continent-group").classList.toggle("collapsed");
+        else if(el.dataset.type === "country") el.closest(".country-group").classList.toggle("collapsed");
+        else if(el.dataset.type === "company") el.closest(".company-group").classList.toggle("collapsed");
+      } else if(el.dataset.act === "filter"){
+        toggleFilter(el.dataset.type, el.dataset.label);
+      }
+    };
+    listEl.addEventListener("change", function(e){
+      const mcb = e.target.closest("input[data-act='mine']");
+      if(mcb){ setMineFilter(mcb.dataset.label, mcb.checked); return; }
+      const ccb = e.target.closest("input[data-act='company-filter']");
+      if(ccb){ toggleFilter("company", ccb.dataset.label); }
+    });
+  }
+
+  function slugOf(name){
+    return D.slugMap[name] || name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+  }
+
+  function isSelected(type, label){
+    return selected.some(s=>s.type===type && s.label===label);
+  }
+
+  function hit(m){
+    if(selected.length===0) return true;
+    return selected.some(s =>
+      s.type==="mine"       ? m.propName===s.label
+      : s.type==="company"  ? m.companyName===s.label
+      : s.type==="country"  ? m.country===s.label
+      : s.type==="continent"? m.continent===s.label : false);
+  }
+
+  function applyFilter(){
+    const pts = [];
+    Object.entries(markers).forEach(([prop, mk])=>{
+      const m = mines.find(x=>x.propName===prop);
+      if(m && hit(m)){
+        if(!activeGroup.hasLayer(mk)) activeGroup.addLayer(mk);
+        pts.push(mk.getLatLng());
+      } else {
+        if(activeGroup.hasLayer(mk)) activeGroup.removeLayer(mk);
+      }
+    });
+    if(selected.length && pts.length){ const b = L.latLngBounds(pts); map.fitBounds(b, {padding:[40,40], maxZoom:10}); }
+  }
+
+  function highlightSidebar(){
+    document.querySelectorAll("[data-act='filter']").forEach(el=>{
+      const on = isSelected(el.dataset.type, el.dataset.label);
+      el.parentElement.classList.toggle("active", on);
+    });
+    // 同步矿 checkbox 选中状态
+    document.querySelectorAll("input[data-act='mine']").forEach(cb=>{
+      cb.checked = isSelected("mine", cb.dataset.label);
+    });
+    // 同步公司筛选 checkbox 选中状态（勾选框=地图筛选，与名称点击打开 HTML 隔离）
+    document.querySelectorAll("input.co-filter-cb").forEach(cb=>{
+      cb.checked = isSelected("company", cb.dataset.label);
+    });
+  }
+
+  function toggleFilter(type, label){
+    const i = selected.findIndex(s=>s.type===type && s.label===label);
+    if(i>=0) selected.splice(i,1); else selected.push({type, label});
+    applyFilter();
+    renderChips();
+    highlightSidebar();
+  }
+
+  function setMineFilter(label, on){
+    const i = selected.findIndex(s=>s.type==="mine" && s.label===label);
+    if(on){ if(i<0) selected.push({type:"mine", label}); }
+    else { if(i>=0) selected.splice(i,1); }
+    applyFilter();
+    renderChips();
+    highlightSidebar();
+  }
+
+  const TYPE_TAG = {continent:"Continent", country:"Country", company:"Company", mine:"Mine"};
+  function renderChips(){
+    const box = document.getElementById("sb-filter");
+    if(selected.length===0){
+      box.innerHTML = `<span class="empty">No filter — click a name to multi-select</span>`;
+      return;
+    }
+    let h = "";
+    selected.forEach(s=>{
+      h += `<span class="chip c-${s.type}"><span class="tag">${TYPE_TAG[s.type]}</span>${esc(s.label)}` +
+           `<span class="x" data-act="remove" data-type="${s.type}" data-label="${esc(s.label)}">×</span></span>`;
+    });
+    h += `<span class="clear-all" data-act="clear">Clear</span>`;
+    box.innerHTML = h;
+    box.onclick = function(e){
+      const rm = e.target.closest("[data-act='remove']");
+      if(rm){ toggleFilter(rm.dataset.type, rm.dataset.label); return; }
+      const cl = e.target.closest("[data-act='clear']");
+      if(cl){ selected.length = 0; applyFilter(); renderChips(); highlightSidebar(); }
+    };
+  }
+
+  // ================= Tab2 矿明细表 =================
+  const MINE_COLS = [
+    ["propName","Property Name"],["country","Country"],["commodity","Primary Commodity"],
+    ["commoditiesList","List of Commodities"],["ownerName","Owner Name"],["ownerCountry","Owner Country"],
+    ["exchange","Exchange"],["ownerList","List of Owners"],
+    ["grdAuMI","Au Grade M&I (g/t)"],["containedAuMI","Au Contained M&I (oz)"],
+    ["grdAuTotal","Au Grade Total (g/t)"],["containedAuTotal","Au Contained Total (oz)"],
+    ["grdCuMI","Cu Grade M&I (%)"],["containedCuMI","Cu Contained M&I (t)"],
+    ["grdCuTotal","Cu Grade Total (%)"],["containedCuTotal","Cu Contained Total (t)"],
+  ];
+  const NUM_KEYS = new Set(["grdAuMI","containedAuMI","grdAuTotal","containedAuTotal","grdCuMI","containedCuMI","grdCuTotal","containedCuTotal"]);
+  let mineSort = {key:null, dir:1};
+
+  function fillSelect(id, values, label){
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    sel.innerHTML = `<option value="">All ${label}</option>` + values.sort().map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("");
+    sel.value = cur;
+  }
+  fillSelect("mine-commodity", [...new Set(mines.map(m=>m.commodity).filter(Boolean))], "commodities");
+  fillSelect("mine-country", [...new Set(mines.map(m=>m.country).filter(Boolean))], "countries");
+  fillSelect("mine-company", [...new Set(mines.map(m=>m.companyName).filter(Boolean))], "companies");
+
+  function renderMineTable(){
+    const q = document.getElementById("mine-search").value.trim().toLowerCase();
+    const fc = document.getElementById("mine-commodity").value;
+    const fy = document.getElementById("mine-country").value;
+    const fo = document.getElementById("mine-company").value;
+    let rows = mines.filter(m=>{
+      if(fc && m.commodity!==fc) return false;
+      if(fy && m.country!==fy) return false;
+      if(fo && m.companyName!==fo) return false;
+      if(q && !(m.propName+" "+m.companyName+" "+m.country+" "+m.ownerName+" "+m.ownerList).toLowerCase().includes(q)) return false;
+      return true;
+    });
+    if(mineSort.key){
+      const k = mineSort.key;
+      rows.sort((a,b)=>{
+        const va=a[k], vb=b[k];
+        if(NUM_KEYS.has(k)) return ((va==null? -1e18:va)-(vb==null? -1e18:vb)) * mineSort.dir;
+        return String(va??"").localeCompare(String(vb??"")) * mineSort.dir;
+      });
+    }
+    document.getElementById("mine-hint").textContent = `${rows.length} / ${mines.length} mines`;
+    const thead = `<tr>${MINE_COLS.map(([k,label],i)=>{
+      const arrow = mineSort.key===k ? (mineSort.dir>0?" ▲":" ▼") : "";
+      return `<th data-k="${k}" data-i="${i}">${label}${arrow}</th>`;
+    }).join("")}</tr>`;
+    const tbody = rows.map(m=>{
+      const tds = MINE_COLS.map(([k])=>{
+        const v = m[k];
+        if(NUM_KEYS.has(k)) return `<td class="num">${fmt(v)}</td>`;
+        if(k==="commodity") return `<td><span class="comm-dot" style="background:${colorOf(v)}"></span>${esc(v)}</td>`;
+        return `<td>${esc(v)}</td>`;
+      }).join("");
+      return `<tr>${tds}</tr>`;
+    }).join("");
+    document.getElementById("mine-table").innerHTML = thead + tbody;
+    document.querySelectorAll("#mine-table th").forEach(th=>th.addEventListener("click", ()=>{
+      const k = th.dataset.k;
+      if(mineSort.key===k) mineSort.dir*=-1; else { mineSort.key=k; mineSort.dir=1; }
+      renderMineTable();
+    }));
+  }
+  ["mine-search","mine-commodity","mine-country","mine-company"].forEach(id=>{
+    document.getElementById(id).addEventListener("input", renderMineTable);
+    document.getElementById(id).addEventListener("change", renderMineTable);
+  });
+
+  // ================= Tab3 公司明细表 =================
+  const CO_COLS = [
+    ["name","Company Name"],["tickerSymbols","Ticker"],["exchange","Exchange"],["primaryFocus","Primary Focus"],
+    ["companyType","Company Type"],["commodity","Commodity"],["mineCount","# Mines"],
+    ["oneOnOne","1-on-1"],["website","Website"],
+  ];
+  let coSort = {key:null, dir:1};
+  function renderCoTable(){
+    const q = document.getElementById("co-search").value.trim().toLowerCase();
+    let rows = companies.filter(c=> !q || (c.name+" "+c.tickerSymbols+" "+c.primaryFocus).toLowerCase().includes(q));
+    if(coSort.key){ const k=coSort.key;
+      rows.sort((a,b)=>{
+        if(k==="mineCount") return (a[k]-b[k])*coSort.dir;
+        return String(a[k]??"").localeCompare(String(b[k]??""))*coSort.dir;
+      });
+    }
+    document.getElementById("co-hint").textContent = `${rows.length} companies`;
+    const thead = `<tr>${CO_COLS.map(([k,label])=>{
+      const arrow = coSort.key===k ? (coSort.dir>0?" ▲":" ▼") : "";
+      return `<th data-k="${k}">${label}${arrow}</th>`;
+    }).join("")}</tr>`;
+    const tbody = rows.map(c=>{
+      const tds = CO_COLS.map(([k])=>{
+        if(k==="website") return `<td>${c.website?`<a class="ext" href="${esc(c.website)}" target="_blank" rel="noopener">Visit ↗</a>`:"—"}</td>`;
+        if(k==="name") return `<td><a class="ext" href="companies/${c.slug}.html" target="_blank" rel="noopener" data-slug="${c.slug}">${esc(c.name)}</a></td>`;
+        if(k==="mineCount") return `<td class="num">${c.mineCount}</td>`;
+        return `<td>${esc(c[k])}</td>`;
+      }).join("");
+      return `<tr>${tds}</tr>`;
+    }).join("");
+    document.getElementById("co-table").innerHTML = thead + tbody;
+    document.querySelectorAll("#co-table th").forEach(th=>th.addEventListener("click", ()=>{
+      const k = th.dataset.k;
+      if(coSort.key===k) coSort.dir*=-1; else { coSort.key=k; coSort.dir=1; }
+      renderCoTable();
+    }));
+    document.querySelectorAll("#co-table a[data-slug]").forEach(a=>a.addEventListener("click", e=>onCompanyLink(e, a.dataset.slug)));
+  }
+  document.getElementById("co-search").addEventListener("input", renderCoTable);
+
+  // ---------- init ----------
+  initMap();
+  buildLegend();
+  buildSidebar();
+  renderChips();
+  renderMineTable();
+  renderCoTable();
+
+  // 聚类开关
+  document.getElementById("cluster-check").addEventListener("change", e=>{
+    clustering = e.target.checked;
+    buildMapMarkers();
+    applyFilter();
+  });
+})();
+</script>
+</body>
+</html>
