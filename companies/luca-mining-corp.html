@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luca Mining Corp — Company Report</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    :root{--bg:#f5f6f8;--panel:#fff;--line:#e3e6ea;--ink:#1f2733;--muted:#6b7480;
+      --accent:#1f6feb;--header:#1c2534;--header-ink:#eaf0f7;}
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:-apple-system,Segoe UI,"Microsoft YaHei",Arial,sans-serif;
+      background:var(--bg);color:var(--ink);line-height:1.6;}
+    header.top{background:var(--header);color:var(--header-ink);padding:14px 22px;display:flex;
+      align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:20;}
+    header.top .cname{font-size:18px;font-weight:700;}
+    header.top .tick{background:var(--accent);color:#fff;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;}
+    header.top .meta{font-size:12px;color:#9fb0c4;}
+    header.top .wlink{color:#7fb0ff;font-size:13px;text-decoration:none;margin-left:auto;}
+    header.top .back{color:#cdd9e8;font-size:13px;text-decoration:none;margin-left:8px;}
+    .layout{display:flex;align-items:flex-start;max-width:1100px;margin:0 auto;padding:18px;}
+    nav.toc{position:sticky;top:80px;width:190px;flex:0 0 190px;align-self:flex-start;
+      background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 10px;margin-right:18px;}
+    nav.toc .tt{font-size:11px;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:4px 6px 8px;}
+    nav.toc ul{list-style:none;margin:0;padding:0;}
+    nav.toc li a{display:block;padding:6px 8px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:13px;}
+    nav.toc li a:hover{background:#eaf1fb;color:var(--accent);}
+    main{flex:1 1 auto;min-width:0;}
+    .sec{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
+    .sec-head{font-size:16px;font-weight:700;margin-bottom:10px;padding-left:12px;border-left:4px solid var(--accent);}
+    .sec-no{color:var(--accent);margin-right:8px;}
+    .sec-body{color:#2b3440;font-size:14px;}
+    .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px;}
+    .metric{background:#f3f7fd;border:1px solid #dbe7fb;border-radius:10px;padding:12px;text-align:center;}
+    .metric-label{font-size:11px;color:var(--muted);}
+    .metric-value{font-size:19px;font-weight:700;color:var(--accent);margin-top:4px;}
+    .metric-rows-card{text-align:left;}
+    .metric-rows-card .mrow{display:flex;justify-content:space-between;font-size:13px;padding:2px 4px;border-top:1px dashed #e6eefb;}
+    .metric-rows-card .mrow b{color:var(--accent);}
+    .bullets{margin:10px 0;padding:10px 14px;border-radius:8px;}
+    .bullets.hl{background:#eef6ee;} .bullets.rk{background:#fbeeec;} .bullets.ct{background:#eef3fb;}
+    .bullets-title{font-weight:700;font-size:13px;margin-bottom:6px;}
+    .bullets ul{margin:0;padding-left:18px;} .bullets li{font-size:13.5px;margin:3px 0;}
+    .bullets.plain{background:none;padding:0;}
+    .bullets.plain ul{padding-left:18px;} .bullets.plain li{font-size:14px;margin:4px 0;}
+    .sub-h{font-weight:700;font-size:13.5px;color:var(--accent);margin:12px 0 4px;}
+    .proj-list .li-row,.people-list .li-row,.ms-list .li-row{padding:6px 0;border-bottom:1px solid var(--line);font-size:14px;}
+    .tag{display:inline-block;background:#eaf1fb;color:var(--accent);font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px;}
+    .li-note{font-size:12.5px;color:var(--muted);margin-top:2px;}
+    .chart-wrap{margin:14px 0;} .chart-cap{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+    svg.chart{background:#fff;border:1px solid var(--line);border-radius:8px;width:100%;height:auto;}
+    svg.chart .cval{fill:var(--ink);font-size:11px;} svg.chart .clab{fill:var(--muted);font-size:11px;}
+    .timeline{position:relative;margin:6px 0 0 6px;padding-left:22px;}
+    .timeline:before{content:"";position:absolute;left:5px;top:4px;bottom:4px;width:2px;background:var(--accent);}
+    .tl-item{position:relative;margin-bottom:12px;}
+    .tl-dot{position:absolute;left:-22px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 0 0 2px var(--accent);}
+    .tl-date{font-size:11px;color:var(--muted);font-weight:700;}
+    .tl-body{margin-top:2px;}
+    .tl-body summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--ink);list-style:none;}
+    .tl-body summary::-webkit-details-marker{display:none;}
+    .tl-body summary:before{content:"▸ ";color:var(--accent);}
+    .tl-body[open] summary:before{content:"▾ ";}
+    .tl-sum{font-size:13px;color:#3a4452;margin:4px 0 2px;padding-left:2px;}
+    .nlink{font-size:12px;color:var(--accent);text-decoration:none;}
+    #map{height:300px;border:1px solid var(--line);border-radius:8px;}
+    .map-note{font-size:12px;color:var(--muted);padding:10px;border:1px dashed var(--line);border-radius:8px;}
+    footer.ft{background:var(--panel);border-top:1px solid var(--line);padding:14px 22px;font-size:12px;color:var(--muted);max-width:1100px;margin:0 auto;}
+    footer.ft a{color:var(--accent);text-decoration:none;}
+    @media(max-width:760px){nav.toc{display:none;}.layout{padding:10px;}}
+    </style>
+</head>
+<body>
+<header class="top">
+  <span class="cname">Luca Mining Corp</span>
+  <span class="tick">TSX-V: LUCA</span>
+  <span class="meta">Gold, Silver, Zinc, Copper, Lead &middot; Production (2 operating mines) &middot; Mexico</span>
+  <a class="wlink" href="https://lucamining.com" target="_blank" rel="noopener">&#8599; website</a>
+  <a class="back" href="../index.html">&larr; Dashboard</a>
+</header>
+<div class="layout">
+  <nav class="toc"><div class="tt">CONTENTS</div><ul><li><a href="#summary">Executive Summary</a></li><li><a href="#map">Project Map</a></li><li><a href="#overview">Overview</a></li><li><a href="#assets">Core Assets</a></li><li><a href="#financials">Financials</a></li><li><a href="#management">Management</a></li><li><a href="#profile">Company Profile</a></li><li><a href="#news">Latest News</a></li></ul></nav>
+  <main>
+    <section id="summary" class="sec">
+      <div class="sec-head"><span class="sec-no">&#9733;</span>Executive Summary</div>
+      <div class="sec-body"><div class="metric-grid">
+<div class="metric"><div class="metric-label">Last Price (Aug 24, 2026)</div><div class="metric-value">C$1.10</div></div>
+<div class="metric"><div class="metric-label">Market Cap</div><div class="metric-value">~C$302.7M</div></div>
+<div class="metric"><div class="metric-label">Shares Out (Aug 2026)</div><div class="metric-value">~275.1M</div></div>
+<div class="metric"><div class="metric-label">Operations</div><div class="metric-value">2 producing mines</div></div>
+<div class="metric"><div class="metric-label">Country / Exchange</div><div class="metric-value">Mexico · TSX-V</div></div>
+<div class="metric metric-rows-card"><div class="metric-label">Mineral Resources</div><div class="mrow"><span>Campo Morado M&amp;I</span><b>16.6 Mt @ 8.68% ZnEq</b></div><div class="mrow"><span>Tahuehueto M&amp;I</span><b>6.26 Mt · 425 koz Au</b></div><div class="mrow"><span>Inferred (both)</span><b>~1.9 Mt</b></div></div>
+</div><div class="bullets hl"><div class="bullets-title">Investment highlights</div><ul><li>Two cash-generating Mexican mines: Campo Morado (Zn-Pb-Cu-Au-Ag) and Tahuehueto (Au-Ag) provide diversified production and revenue.</li><li>Campo Morado is among Mexico&#x27;s largest zinc producers (~2,300 tpd) and Tahuehueto exceeded its 1,000 tpd nameplate in Q2 2026.</li><li>Tahuehueto reached commercial production in March 2025, de-risking the growth and cash-flow profile.</li><li>Active near-mine exploration is expanding high-grade zones at both mines (e.g. Largo Norte, El Rey, Creston breccia).</li></ul></div><div class="bullets rk"><div class="bullets-title">Key risks</div><ul><li>Concentrate price exposure to global base-metals (Zn/Pb) and precious-metals markets; provisional pricing can create quarterly adjustments.</li><li>Operating and jurisdictional risk across two distinct Mexican sites.</li><li>Resource/reserve figures are historical estimates (Tahuehueto PFS Apr 2022; Campo Morado MRE) and require NI 43-101 verification.</li><li>Shareholder structure not disclosed in the reviewed corporate materials.</li></ul></div><div class="bullets ct"><div class="bullets-title">Near-term catalysts</div><ul><li>Continued drill results from Campo Morado (Largo Norte, Naranjo, El Rey) and Tahuehueto (Creston breccia) expansion.</li><li>Q3 2026 production and cost updates; progress on the Campo Morado Expansion design.</li><li>Potential resource update and reserve conversion at Tahuehueto; debt fully repaid in July 2026 strengthens balance sheet.</li></ul></div></div>
+    </section>
+    <section id="map" class="sec">
+      <div class="sec-head"><span class="sec-no">&bull;</span>Project Map</div>
+      <div class="sec-body"><div id="map"></div></div>
+    </section>
+    <section id="overview" class="sec"><div class="sec-head"><span class="sec-no">1</span>Overview</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Luca Mining Corp. (TSX-V: LUCA; OTCQX: LUCMF; Frankfurt: Z68) is a Mexican precious- and base-metals producer operating two mines: Campo Morado (polymetallic Zn-Pb-Cu-Au-Ag) in Guerrero and Tahuehueto (Au-Ag) in Durango.</li><li>The Company produces gold, silver, zinc, copper and lead, providing diversified metal revenue and operating cash flow.</li><li>Strategy focuses on optimising current operations while advancing near-mine exploration and resource growth across its Sierra Madre land package.</li></ul></div><div class="sub-h">Production profile</div><div class="bullets plain"><div class="bullets-title"></div><ul><li>Campo Morado operates at ~2,300 tpd and is among Mexico&#x27;s largest zinc producers.</li><li>Tahuehueto achieved commercial production in March 2025, averaging ~1,115 tpd milled in Q2 2026 (above its 1,000 tpd installed nameplate).</li></ul></div></div></section>
+    <section id="assets" class="sec"><div class="sec-head"><span class="sec-no">2</span>Core Assets</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Campo Morado (Guerrero): polymetallic VMS. M&amp;I 16,627,000 t @ 8.68% ZnEq (Zn 4.01%, Pb 0.93%, Cu 0.80%, Au 1.70 g/t, Ag 123 g/t); Inferred 998,000 t @ 7.27% ZnEq; cut-off 5.5% ZnEq.</li><li>Tahuehueto (Durango): Au-Ag epithermal. Proven+Probable reserves 3.77 Mt (294 koz Au, 5.77 Moz Ag); M&amp;I resource 6.26 Mt (425 koz Au, 9.45 Moz Ag); Inferred 0.92 Mt (30 koz Au). PFS dated Apr 27, 2022.</li><li>Exploration assets El Realito and Jocuixtita (Sinaloa) extend the Mexican land package; Tahuehueto hosts ~11 km of prospective vein strike versus ~4.5 km in the current resource model.</li></ul></div><div class="proj-list">
+<div class='li-row'><b>Campo Morado</b><div class="li-note">Polymetallic VMS; M&amp;I 16.6 Mt @ 8.68% ZnEq</div></div>
+<div class='li-row'><b>Tahuehueto</b><div class="li-note">Au-Ag; M&amp;I 6.26 Mt, 425 koz Au</div></div>
+<div class='li-row'><b>El Realito</b><div class="li-note">Sinaloa, Mexico</div></div>
+<div class='li-row'><b>Jocuixtita</b><div class="li-note">Sinaloa, Mexico</div></div>
+</div><div class="chart-wrap"><div class="chart-cap">Contained metal by project</div><svg viewBox="0 0 680 300" width="100%" class="chart">
+<line x1="55" y1="20" x2="55" y2="244" stroke="#e3e6ea"/>
+<line x1="55" y1="244" x2="660" y2="244" stroke="#e3e6ea"/>
+<rect x="106.4" y="20.0" width="197.7" height="224.0" rx="3" fill="#1f6feb"/>
+<text x="206.2" y="15.0" text-anchor="middle" class="cval">16.6</text>
+<text x="206.2" y="258" text-anchor="middle" class="clab">M&amp;I (Mt)</text>
+<text x="206.2" y="276" text-anchor="middle" class="clab" font-weight="700">Campo Morado</text>
+<rect x="408.9" y="159.5" width="197.7" height="84.5" rx="3" fill="#1f6feb"/>
+<text x="508.8" y="154.5" text-anchor="middle" class="cval">6.26</text>
+<text x="508.8" y="258" text-anchor="middle" class="clab">M&amp;I (Mt)</text>
+<text x="508.8" y="276" text-anchor="middle" class="clab" font-weight="700">Tahuehueto</text>
+</svg></div></div></section>
+    <section id="financials" class="sec"><div class="sec-head"><span class="sec-no">3</span>Financials &amp;amp; Capital Structure</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>As of Aug 24, 2026, shares trade ~C$1.10 (TSX-V: LUCA); market capitalisation ~C$302.7M on ~275.1M shares outstanding.</li><li>Q2 2026: revenue US$58.4M (+47% YoY), net earnings US$10.5M (US$0.04/sh), Adjusted EBITDA US$14.3M; H1 2026 revenue US$116.0M, net earnings US$23.1M, Adj. EBITDA US$36.7M.</li><li>Cash &amp; equivalents ~US$24.7M at Jun 30, 2026; remaining debt reduced to ~US$1.4M and scheduled for full repayment in July 2026.</li><li>Shareholder structure not disclosed in the reviewed corporate materials (Q2 2026 filings / June 2026 presentation).</li></ul></div><div class="chart-wrap"><div class="chart-cap">Shareholder structure</div></div></div></section>
+    <section id="management" class="sec"><div class="sec-head"><span class="sec-no">4</span>Management &amp;amp; Board</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Led by an operational team with Mexican production and development track record; multiple sell-side analysts initiated coverage in 2026 (ATB, Canaccord, National Bank, Raymond James, Stifel).</li></ul></div><div class="people-list">
+<div class='li-row'><b>Dan Barnholden</b> <span class="tag">CEO</span></div>
+<div class='li-row'><b>Ramon Perez</b> <span class="tag">President</span></div>
+<div class='li-row'><b>Lisa Dea</b> <span class="tag">CFO</span></div>
+<div class='li-row'><b>Nick Shakesby</b> <span class="tag">COO</span></div>
+<div class='li-row'><b>Israel Munoz</b> <span class="tag">VP Finance</span></div>
+</div></div></section>
+    <section id="profile" class="sec"><div class="sec-head"><span class="sec-no">5</span>Company Profile</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Luca Mining is a Mexican-focused precious and base metals producer with dual operations in Guerrero and Durango.</li><li>The Company is advancing the Campo Morado Expansion and resource-growth drilling at both mines while maintaining a strengthened balance sheet.</li></ul></div><div class="ms-list">
+<div class='li-row'><b>2022-04</b> &mdash; Tahuehueto PFS released (Apr 27, 2022)</div>
+<div class='li-row'><b>2025-03</b> &mdash; Tahuehueto achieves commercial production</div>
+<div class='li-row'><b>2026-04/05</b> &mdash; Sell-side coverage initiated (ATB, Canaccord, NBC, Raymond James, Stifel)</div>
+<div class='li-row'><b>2026-07</b> &mdash; Q2 2026 results: US$10.5M net earnings; cash US$24.7M</div>
+<div class='li-row'><b>2026-08</b> &mdash; High-grade drill results at Campo Morado (Largo Norte) and Tahuehueto breccia discovery</div>
+</div></div></section>
+    <section id="news" class="sec"><div class="sec-head"><span class="sec-no">6</span>Latest News</div><div class="sec-body"><div class="timeline">
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-08-17</div><details class="tl-body"><summary>Luca Mining Reports $10.5M Net Earnings in Q2 2026</summary><div class="tl-sum">Q2 2026 revenue US$58.4M (+47% YoY), net earnings US$10.5M (US$0.04/share), Adjusted EBITDA US$14.3M. H1 2026 revenue US$116.0M, net earnings US$23.1M, Adj. EBITDA US$36.7M. Cash US$24.7M at Jun 30; remaining debt scheduled for full repayment in July 2026. <a href="https://lucamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-08-06</div><details class="tl-body"><summary>184m @ 1.2 g/t Au at Largo Norte Zone, Campo Morado</summary><div class="tl-sum">Underground hole CMUG-26-50 intersected 183.7m @ 1.18 g/t Au, 72.4 g/t Ag, 0.39% Cu, 0.45% Pb, 1.67% Zn (incl. 18.3m @ 2.64 g/t Au) in the unmined Largo Norte zone. Drilling continues to expand Naranjo, Largo Norte and El Rey near-mine high-grade VMS. <a href="https://lucamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-07-20</div><details class="tl-body"><summary>Luca Reports Q2 2026 Production Results</summary><div class="tl-sum">Consolidated Q2 production: Au 6,161 oz, Ag 334,237 oz, Zn 8.9M lb, Pb 1.9M lb, Cu 2.7M lb. Record ~12,400 m drilled in Q2 (~22,000 m YTD). Cash US$24.7M at quarter-end. <a href="https://lucamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-07-07</div><details class="tl-body"><summary>New High-Grade Breccia Zone Discovery at Tahuehueto</summary><div class="tl-sum">Surface drilling confirmed the down-plunge extension of the Creston vein ~20-35m below Level 20. DDH26-246: 4.7m @ 6.73 g/t AuEq (incl. 0.6m @ 14.80 g/t AuEq). High-grade breccia mineralization occurs within development distance of existing workings. <a href="https://lucamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-06-23</div><details class="tl-body"><summary>28.4m @ 2.3 g/t Au at El Rey Zone, Campo Morado</summary><div class="tl-sum">Surface hole CMRY-26-10: 28.4m @ 2.28 g/t Au, 134.9 g/t Ag, 0.57% Cu, 0.95% Pb, 3.69% Zn, expanding the El Rey zone; Naranjo zone also extended. AI prospectivity work (VRIFY DORA) is generating new targets. <a href="https://lucamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-05-26</div><details class="tl-body"><summary>Luca Reports Strong First Quarter 2026 Results</summary><div class="tl-sum">Q1 2026 revenue ~US$57.6M with net earnings of ~US$12.6M, reflecting continued strong operating performance ahead of the Q2 result. <a href="https://lucamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-05-14</div><details class="tl-body"><summary>Luca Announces Intention to Launch Normal Course Issuer Bid</summary><div class="tl-sum">The Company announced its intention to launch a Normal Course Issuer Bid (NCIB) share-repurchase program, signalling balance-sheet strength and capital-return discipline. <a href="https://lucamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-05-05</div><details class="tl-body"><summary>6.8m @ 5.5 g/t AuEq at Tahuehueto — Expanding High-Grade Mineralization</summary><div class="tl-sum">Drilling intersected 6.8m @ 5.5 g/t AuEq proximal to existing workings, further expanding high-grade mineralization at the Tahuehueto mine. <a href="https://lucamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-04-28</div><details class="tl-body"><summary>118m @ 2.5 g/t Au at Largo Norte Zone, Campo Morado</summary><div class="tl-sum">Surface hole intersected 118m @ 2.5 g/t Au, 78 g/t Ag, 0.8% Cu, 0.6% Pb, 2.0% Zn at the Largo Norte zone, highlighting significant near-mine resource growth potential. <a href="https://lucamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+</div></div></section>
+  </main>
+</div>
+<footer class="ft">
+  Source: official website &middot; AI interpretation of public filings (figures cited from source) &middot;
+  Generated 2026-08-25 &middot; Mineral resources are not mineral reserves and have not demonstrated economic viability
+  (NI 43-101). &middot; <a href="../index.html">&larr; Back to Dashboard</a>
+</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  var mines = [{"name": "Campo Morado", "lat": 18.17569, "lng": -100.14407}, {"name": "El Realito", "lat": 25.10111, "lng": -107.16502}, {"name": "Jocuixtita", "lat": 24.26596, "lng": -106.2545}, {"name": "Tahuehueto", "lat": 25.44284, "lng": -106.64091}];
+  var arr = Array.isArray(mines) ? mines : (mines ? [mines] : []);
+  if(arr.length){
+    var map = L.map('map').setView([arr[0].lat, arr[0].lng], 5);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:16, attribution:'Tiles &copy; Esri'}).addTo(map);
+    arr.forEach(function(m){
+      L.circleMarker([m.lat, m.lng], {radius:8, color:'#1f6feb', fillColor:'#1f6feb', fillOpacity:.85})
+        .addTo(map).bindPopup('<b>'+(m.name||'Project')+'</b>');
+    });
+  }
+})();
+</script>
+</body>
+</html>
