@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magna Mining Inc — Company Report</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    :root{--bg:#f5f6f8;--panel:#fff;--line:#e3e6ea;--ink:#1f2733;--muted:#6b7480;
+      --accent:#1f6feb;--header:#1c2534;--header-ink:#eaf0f7;}
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:-apple-system,Segoe UI,"Microsoft YaHei",Arial,sans-serif;
+      background:var(--bg);color:var(--ink);line-height:1.6;}
+    header.top{background:var(--header);color:var(--header-ink);padding:14px 22px;display:flex;
+      align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:20;}
+    header.top .cname{font-size:18px;font-weight:700;}
+    header.top .tick{background:var(--accent);color:#fff;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;}
+    header.top .meta{font-size:12px;color:#9fb0c4;}
+    header.top .wlink{color:#7fb0ff;font-size:13px;text-decoration:none;margin-left:auto;}
+    header.top .back{color:#cdd9e8;font-size:13px;text-decoration:none;margin-left:8px;}
+    .layout{display:flex;align-items:flex-start;max-width:1100px;margin:0 auto;padding:18px;}
+    nav.toc{position:sticky;top:80px;width:190px;flex:0 0 190px;align-self:flex-start;
+      background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 10px;margin-right:18px;}
+    nav.toc .tt{font-size:11px;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:4px 6px 8px;}
+    nav.toc ul{list-style:none;margin:0;padding:0;}
+    nav.toc li a{display:block;padding:6px 8px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:13px;}
+    nav.toc li a:hover{background:#eaf1fb;color:var(--accent);}
+    main{flex:1 1 auto;min-width:0;}
+    .sec{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
+    .sec-head{font-size:16px;font-weight:700;margin-bottom:10px;padding-left:12px;border-left:4px solid var(--accent);}
+    .sec-no{color:var(--accent);margin-right:8px;}
+    .sec-body{color:#2b3440;font-size:14px;}
+    .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px;}
+    .metric{background:#f3f7fd;border:1px solid #dbe7fb;border-radius:10px;padding:12px;text-align:center;}
+    .metric-label{font-size:11px;color:var(--muted);}
+    .metric-value{font-size:19px;font-weight:700;color:var(--accent);margin-top:4px;}
+    .metric-rows-card{text-align:left;}
+    .metric-rows-card .mrow{display:flex;justify-content:space-between;font-size:13px;padding:2px 4px;border-top:1px dashed #e6eefb;}
+    .metric-rows-card .mrow b{color:var(--accent);}
+    .bullets{margin:10px 0;padding:10px 14px;border-radius:8px;}
+    .bullets.hl{background:#eef6ee;} .bullets.rk{background:#fbeeec;} .bullets.ct{background:#eef3fb;}
+    .bullets-title{font-weight:700;font-size:13px;margin-bottom:6px;}
+    .bullets ul{margin:0;padding-left:18px;} .bullets li{font-size:13.5px;margin:3px 0;}
+    .bullets.plain{background:none;padding:0;}
+    .bullets.plain ul{padding-left:18px;} .bullets.plain li{font-size:14px;margin:4px 0;}
+    .sub-h{font-weight:700;font-size:13.5px;color:var(--accent);margin:12px 0 4px;}
+    .proj-list .li-row,.people-list .li-row,.ms-list .li-row{padding:6px 0;border-bottom:1px solid var(--line);font-size:14px;}
+    .tag{display:inline-block;background:#eaf1fb;color:var(--accent);font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px;}
+    .li-note{font-size:12.5px;color:var(--muted);margin-top:2px;}
+    .chart-wrap{margin:14px 0;} .chart-cap{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+    svg.chart{background:#fff;border:1px solid var(--line);border-radius:8px;width:100%;height:auto;}
+    svg.chart .cval{fill:var(--ink);font-size:11px;} svg.chart .clab{fill:var(--muted);font-size:11px;}
+    .timeline{position:relative;margin:6px 0 0 6px;padding-left:22px;}
+    .timeline:before{content:"";position:absolute;left:5px;top:4px;bottom:4px;width:2px;background:var(--accent);}
+    .tl-item{position:relative;margin-bottom:12px;}
+    .tl-dot{position:absolute;left:-22px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 0 0 2px var(--accent);}
+    .tl-date{font-size:11px;color:var(--muted);font-weight:700;}
+    .tl-body{margin-top:2px;}
+    .tl-body summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--ink);list-style:none;}
+    .tl-body summary::-webkit-details-marker{display:none;}
+    .tl-body summary:before{content:"▸ ";color:var(--accent);}
+    .tl-body[open] summary:before{content:"▾ ";}
+    .tl-sum{font-size:13px;color:#3a4452;margin:4px 0 2px;padding-left:2px;}
+    .nlink{font-size:12px;color:var(--accent);text-decoration:none;}
+    #map{height:300px;border:1px solid var(--line);border-radius:8px;}
+    .map-note{font-size:12px;color:var(--muted);padding:10px;border:1px dashed var(--line);border-radius:8px;}
+    footer.ft{background:var(--panel);border-top:1px solid var(--line);padding:14px 22px;font-size:12px;color:var(--muted);max-width:1100px;margin:0 auto;}
+    footer.ft a{color:var(--accent);text-decoration:none;}
+    @media(max-width:760px){nav.toc{display:none;}.layout{padding:10px;}}
+    </style>
+</head>
+<body>
+<header class="top">
+  <span class="cname">Magna Mining Inc</span>
+  <span class="tick">TSX: NICU</span>
+  <span class="meta">Nickel, Copper, PGM (Pt, Pd, Au, Ag) &middot; Production (McCreedy West) + Development &middot; Canada (Ontario, Sudbury)</span>
+  <a class="wlink" href="https://magnamining.com" target="_blank" rel="noopener">&#8599; website</a>
+  <a class="back" href="../index.html">&larr; Dashboard</a>
+</header>
+<div class="layout">
+  <nav class="toc"><div class="tt">CONTENTS</div><ul><li><a href="#summary">Executive Summary</a></li><li><a href="#map">Project Map</a></li><li><a href="#overview">Overview</a></li><li><a href="#assets">Core Assets</a></li><li><a href="#financials">Financials</a></li><li><a href="#management">Management</a></li><li><a href="#profile">Company Profile</a></li><li><a href="#news">Latest News</a></li></ul></nav>
+  <main>
+    <section id="summary" class="sec">
+      <div class="sec-head"><span class="sec-no">&#9733;</span>Executive Summary</div>
+      <div class="sec-body"><div class="metric-grid">
+<div class="metric"><div class="metric-label">Last Price (Jul 2026)</div><div class="metric-value">C$2.25*</div></div>
+<div class="metric"><div class="metric-label">Mkt Cap (pro-forma)</div><div class="metric-value">~C$700M</div></div>
+<div class="metric"><div class="metric-label">Shares (pro-forma)</div><div class="metric-value">~312.7M</div></div>
+<div class="metric"><div class="metric-label">Q2 Cash</div><div class="metric-value">C$40.0M</div></div>
+<div class="metric"><div class="metric-label">Stage</div><div class="metric-value">Producer + Dev.</div></div>
+<div class="metric metric-rows-card"><div class="metric-label">Key Resources</div><div class="mrow"><span>McCreedy W. Ind</span><b>5.63 Mt @ 1.10% Cu</b></div><div class="mrow"><span>Shakespeare Ind</span><b>20.3 Mt @ 0.55% NiEq</b></div><div class="mrow"><span>Crean Hill</span><b>&gt;30 Mt (14.5 Mt HG)</b></div></div>
+</div><div class="bullets hl"><div class="bullets-title">Investment highlights</div><ul><li>McCreedy West is in production and setting quarterly records (Q2 2026: 98,446 tons processed @ 3.34% CuEq; 6.6M CuEq contained lbs).</li><li>Free-cash-flow positive in Q2 2026 (FCF C$5.1M; cash margin C$8.9M); cash C$40.0M and working capital C$45.3M at Jun 30, 2026.</li><li>C$140M strategic investment by Alpayana (Peru) at C$2.25/share (~19.9% pro-forma) to accelerate Levack and Crean Hill.</li><li>Development pipeline in Sudbury: Shakespeare (feasibility, 4,500 tpd permitted), Levack (PEA) and Crean Hill (PFS), both studies targeted Q3 2026.</li><li>TSX uplisting (June 23, 2026) enhances liquidity and investor access.</li></ul></div><div class="bullets rk"><div class="bullets-title">Key risks</div><ul><li>Production concentrated at a single operating mine (McCreedy West).</li><li>Development projects (Shakespeare, Levack, Crean Hill) require substantial capital and study completion; no future production guaranteed.</li><li>Critical-minerals (Ni/Cu/PGM) price and offtake exposure; McCreedy West ore is processed by Vale&#x27;s Clarabelle Mill under an offtake agreement.</li><li>Share-count and market-cap figures are pro-forma, based on the Alpayana placement price (C$2.25), not a live market quote.</li></ul></div><div class="bullets ct"><div class="bullets-title">Near-term catalysts</div><ul><li>Levack PEA and Crean Hill PFS completion in Q3 2026.</li><li>Closing of the Alpayana investment (Q3 2026) — new ~19.9% major shareholder.</li><li>Continued high-grade footwall drilling at Levack (R2 Zone) and McCreedy West resource/reserve growth.</li><li>Potential construction decision at Crean Hill following PFS.</li></ul></div></div>
+    </section>
+    <section id="map" class="sec">
+      <div class="sec-head"><span class="sec-no">&bull;</span>Project Map</div>
+      <div class="sec-body"><div id="map"></div></div>
+    </section>
+    <section id="overview" class="sec"><div class="sec-head"><span class="sec-no">1</span>Overview</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Magna Mining Inc. (TSX: NICU; OTCQX: MGMNF; FSE: 8YD) is a Canadian base- and precious-metals producer focused on the Sudbury Basin, Ontario, with copper, nickel and PGM (platinum, palladium, gold, silver) assets.</li><li>The Company&#x27;s primary asset is the producing McCreedy West copper-PGE-nickel mine, supported by a pipeline of past-producing properties: Levack, Crean Hill, Podolsky and Shakespeare.</li><li>Strategy pairs cash generation from McCreedy West with advancement of a development pipeline toward multiple future production centres in the Sudbury district.</li></ul></div><div class="sub-h">Operating model</div><div class="bullets plain"><div class="bullets-title"></div><ul><li>McCreedy West ore is processed by Vale at the Clarabelle Mill under an offtake agreement.</li><li>Q2 2026 set records for tonnage and contained CuEq; cash costs US$3.76/CuEq lb, AISC US$4.54/CuEq lb, production cost $199/ton (-6.9% QoQ).</li></ul></div></div></section>
+    <section id="assets" class="sec"><div class="sec-head"><span class="sec-no">2</span>Core Assets</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>McCreedy West (Sudbury): operating Cu-PGE-Ni mine. Indicated resource 5,632,000 t @ 1.10% Cu, 0.98% Ni, 0.82 g/t Pt, 0.92 g/t Pd, 0.23 g/t Au; Inferred 874,000 t @ 1.37% Cu, 1.00% Ni. Probable reserve 987,000 t @ 1.59% Cu, 0.32% Ni (eff. Dec 31, 2025).</li><li>Shakespeare (70km SW Sudbury): feasibility-stage, permitted 4,500 tpd Ni-Cu-PGM project. Total Indicated 20.34 Mt @ 0.55% NiEq; Inferred 2.36 Mt @ 0.57% NiEq; Probable reserve (open pit) 11.87 Mt (Jan 2022).</li><li>Crean Hill: brownfield past-producer with NI 43-101 resource &gt;30 Mt, including 14.5 Mt high-grade underground (SGS 2022); PFS on track Q3 2026.</li><li>Levack: advanced past-producer with historical high-grade Footwall production (Morrison: 2.0 Mt @ 7.1% Cu, 1.4% Ni, 8.1 g/t PGM); new technical report filed Dec 31, 2025; PEA targeted Q3 2026. R2 Footwall Zone returned 29.7% CuEq over 3.4m (Jun 2026).</li><li>Podolsky: permitted past-producing Ni-Cu-PGM project in the Sudbury basin.</li></ul></div><div class="proj-list">
+<div class='li-row'><b>McCreedy West</b><div class="li-note">Cu-PGE-Ni; Ind 5.63 Mt @ 1.10% Cu</div></div>
+<div class='li-row'><b>Shakespeare</b><div class="li-note">Ni-Cu-PGM; Ind 20.3 Mt @ 0.55% NiEq; permitted 4,500 tpd</div></div>
+<div class='li-row'><b>Crean Hill</b><div class="li-note">&gt;30 Mt resource; brownfield</div></div>
+<div class='li-row'><b>Levack</b><div class="li-note">High-grade Footwall; R2 Zone 29.7% CuEq</div></div>
+</div><div class="chart-wrap"><div class="chart-cap">Contained metal by project</div><svg viewBox="0 0 680 300" width="100%" class="chart">
+<line x1="55" y1="20" x2="55" y2="244" stroke="#e3e6ea"/>
+<line x1="55" y1="244" x2="660" y2="244" stroke="#e3e6ea"/>
+<rect x="89.3" y="202.0" width="131.1" height="42.0" rx="3" fill="#1f6feb"/>
+<text x="155.8" y="197.0" text-anchor="middle" class="cval">5.63</text>
+<text x="155.8" y="258" text-anchor="middle" class="clab">Ind (Mt)</text>
+<text x="155.8" y="276" text-anchor="middle" class="clab" font-weight="700">McCreedy West</text>
+<rect x="290.9" y="92.1" width="131.1" height="151.9" rx="3" fill="#1f6feb"/>
+<text x="357.5" y="87.1" text-anchor="middle" class="cval">20.34</text>
+<text x="357.5" y="258" text-anchor="middle" class="clab">Ind (Mt)</text>
+<text x="357.5" y="276" text-anchor="middle" class="clab" font-weight="700">Shakespeare</text>
+<rect x="492.6" y="20.0" width="131.1" height="224.0" rx="3" fill="#1f6feb"/>
+<text x="559.2" y="15.0" text-anchor="middle" class="cval">30.0</text>
+<text x="559.2" y="258" text-anchor="middle" class="clab">Resource (Mt)</text>
+<text x="559.2" y="276" text-anchor="middle" class="clab" font-weight="700">Crean Hill</text>
+</svg></div></div></section>
+    <section id="financials" class="sec"><div class="sec-head"><span class="sec-no">3</span>Financials &amp;amp; Capital Structure</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>No live market quote captured; last disclosed price C$2.25/share (Jul 2026 Alpayana strategic placement). Pro-forma share count ~312.7M implies market cap ~C$700M (post-placement, illustrative).</li><li>Q2 2026: CuEq revenue C$32.4M (record); cash margin C$8.9M; operating cash flow C$8.9M; free cash flow C$5.1M; EPS C$0.04.</li><li>Cash &amp; equivalents C$40.0M and working capital C$45.3M at Jun 30, 2026. C$140M Alpayana placement expected to close Q3 2026.</li><li>Costs: cash cost US$3.76/CuEq lb; AISC US$4.54/CuEq lb; production cost C$199/ton. Full-year 2026 guidance 16.0-18.0M CuEq payable lbs.</li><li>Shareholder structure: Alpayana to hold ~19.9% post-placement; full breakdown not disclosed in reviewed materials.</li></ul></div><div class="chart-wrap"><div class="chart-cap">Shareholder structure</div><svg viewBox="0 0 385 210" width="100%" class="chart donut">
+<circle cx="105" cy="105" r="72" fill="none" stroke="#eef2f7" stroke-width="22"/>
+<circle cx="105" cy="105" r="72" fill="none" stroke="#1f6feb" stroke-width="22" stroke-dasharray="90.0 362.4" stroke-dashoffset="0.0" transform="rotate(-90 105 105)"/>
+<circle cx="105" cy="105" r="72" fill="none" stroke="#27ae60" stroke-width="22" stroke-dasharray="362.4 90.0" stroke-dashoffset="-90.0" transform="rotate(-90 105 105)"/>
+<text x="105" y="101" text-anchor="middle" class="clab" font-size="13" font-weight="700">Ownership</text>
+<text x="105" y="119" text-anchor="middle" class="cval" font-size="15">100%</text>
+<rect x="232" y="30" width="11" height="11" rx="2" fill="#1f6feb"/>
+<text x="250" y="40" class="clab">Alpayana (pro-forma) 19.9%</text>
+<rect x="232" y="52" width="11" height="11" rx="2" fill="#27ae60"/>
+<text x="250" y="62" class="clab">Public &amp; other 80.1%</text>
+</svg></div></div></section>
+    <section id="management" class="sec"><div class="sec-head"><span class="sec-no">4</span>Management &amp;amp; Board</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Led by CEO Jason Jessup; a CFO transition is planned (Scott Gilbert retiring end-2026, Greg Huffman to succeed as CFO).</li></ul></div><div class="people-list">
+<div class='li-row'><b>Jason Jessup, MBA</b> <span class="tag">CEO &amp; Director</span></div>
+<div class='li-row'><b>Paul Fowler, CFA</b> <span class="tag">EVP</span></div>
+<div class='li-row'><b>Jeff Huffman</b> <span class="tag">COO</span></div>
+<div class='li-row'><b>Scott Gilbert, CA, CPA, CBV</b> <span class="tag">CFO</span></div>
+<div class='li-row'><b>David King, M.Sc., P.Geo.</b> <span class="tag">SVP Exploration</span></div>
+</div></div></section>
+    <section id="profile" class="sec"><div class="sec-head"><span class="sec-no">5</span>Company Profile</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Magna Mining is a Sudbury Basin-focused producer of copper, nickel and PGM with a growing development pipeline.</li><li>McCreedy West provides cash flow while Shakespeare, Levack and Crean Hill advance toward potential future production.</li></ul></div><div class="ms-list">
+<div class='li-row'><b>2026-02</b> &mdash; McCreedy West initial mineral reserves filed; resource updated</div>
+<div class='li-row'><b>2026-04</b> &mdash; McCreedy West technical report filed</div>
+<div class='li-row'><b>2026-06-23</b> &mdash; Graduated to TSX (from TSX-V), ticker NICU</div>
+<div class='li-row'><b>2026-07-06</b> &mdash; C$140M strategic investment by Alpayana announced</div>
+<div class='li-row'><b>2026-08-12</b> &mdash; Q2 2026: record production, FCF C$5.1M, cash C$40M</div>
+<div class='li-row'><b>2026-Q3</b> &mdash; Levack PEA &amp; Crean Hill PFS expected</div>
+</div></div></section>
+    <section id="news" class="sec"><div class="sec-head"><span class="sec-no">6</span>Latest News</div><div class="sec-body"><div class="timeline">
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-08-12</div><details class="tl-body"><summary>Q2 2026 Operating and Financial Results</summary><div class="tl-sum">Record Q2: 98,446 tons processed @ 3.34% CuEq (6.6M CuEq lbs); CuEq revenue C$32.4M; cash margin C$8.9M; operating cash flow and FCF both C$5.1M; cash C$40.0M. CFO Scott Gilbert to retire end-2026 (Greg Huffman successor). <a href="https://magnamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-07-06</div><details class="tl-body"><summary>C$140M Strategic Investment by Alpayana</summary><div class="tl-sum">Non-brokered placement of 62.2M shares at C$2.25 (~C$140M); Alpayana to hold ~19.9% pro-forma. Proceeds to advance Levack and Crean Hill development. <a href="https://magnamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-06-29</div><details class="tl-body"><summary>Record Quarterly Tonnage at McCreedy West; Q2 Operational Update</summary><div class="tl-sum">91,724 tons shipped in Q2 (record, +11.5% vs Q1); average grades ~3.55% CuEq; underground development also set a quarterly record. <a href="https://magnamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-06-22</div><details class="tl-body"><summary>29.7% CuEq over 3.4m at Levack R2 Footwall Zone</summary><div class="tl-sum">DDH intersected 29.7% CuEq (9.4% Cu, 2.3% Ni, 19.8 g/t Au, 8.8 g/t Pt+Pd) within the R2 Footwall Zone, highlighting high-grade expansion potential at Levack. <a href="https://magnamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-06-18</div><details class="tl-body"><summary>Graduation to TSX &amp; AGM Results</summary><div class="tl-sum">Common shares began trading on the Toronto Stock Exchange on June 23, 2026 under the symbol NICU, following conditional approval in May 2026. <a href="https://magnamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-05-27</div><details class="tl-body"><summary>Q1 2026 Operating and Financial Results</summary><div class="tl-sum">Q1 results reported; the Company subsequently turned free-cash-flow positive in Q2 2026 after a Q1 outflow. <a href="https://magnamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-04-14</div><details class="tl-body"><summary>23.2% Cu, 5.6% Ni, 21.4 g/t PGM+Au over 2.4m at Levack</summary><div class="tl-sum">High-grade Footwall intercept (plus 225 g/t Ag) and an update on Levack Mine progress ahead of the PEA. <a href="https://magnamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-02-18</div><details class="tl-body"><summary>Initial Mineral Reserves for McCreedy West; Levack Drill Results</summary><div class="tl-sum">First mineral reserves declared at McCreedy West (Probable 987 kt); additional high-grade footwall results reported at Levack. <a href="https://magnamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-02-05</div><details class="tl-body"><summary>2026 Guidance</summary><div class="tl-sum">Full-year 2026 guidance of 16.0-18.0 million CuEq payable pounds from McCreedy West. <a href="https://magnamining.com/news/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+</div></div></section>
+  </main>
+</div>
+<footer class="ft">
+  Source: official website &middot; AI interpretation of public filings (figures cited from source) &middot;
+  Generated 2026-08-25 &middot; Mineral resources are not mineral reserves and have not demonstrated economic viability
+  (NI 43-101). &middot; <a href="../index.html">&larr; Back to Dashboard</a>
+</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  var mines = [{"name": "Boleadora", "lat": -47.144419, "lng": -69.982008}, {"name": "Cape Spencer", "lat": 45.203, "lng": -65.915}, {"name": "Crean Hill", "lat": 46.42944, "lng": -81.34988}, {"name": "Deseado Massif", "lat": -47.262646, "lng": -68.325335}, {"name": "Falconbridge Footwall", "lat": 46.56667, "lng": -80.81667}, {"name": "Great Northern", "lat": 49.89968, "lng": -56.7786}, {"name": "North Range", "lat": 46.7931, "lng": -80.99719}, {"name": "Parkin", "lat": 46.831904, "lng": -80.860547}, {"name": "Rocky Brook", "lat": 47.60586, "lng": -66.43332}, {"name": "Shakespeare", "lat": 46.33418, "lng": -81.85949}, {"name": "Skeleton Coast", "lat": -19.31667, "lng": 12.7}, {"name": "Sudbury", "lat": 46.68002, "lng": -80.77864}, {"name": "Sudbury Operations", "lat": 46.63626, "lng": -81.39866}, {"name": "Trill", "lat": 46.47694, "lng": -81.58796}, {"name": "Viking", "lat": 49.69998, "lng": -56.98215}];
+  var arr = Array.isArray(mines) ? mines : (mines ? [mines] : []);
+  if(arr.length){
+    var map = L.map('map').setView([arr[0].lat, arr[0].lng], 5);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:16, attribution:'Tiles &copy; Esri'}).addTo(map);
+    arr.forEach(function(m){
+      L.circleMarker([m.lat, m.lng], {radius:8, color:'#1f6feb', fillColor:'#1f6feb', fillOpacity:.85})
+        .addTo(map).bindPopup('<b>'+(m.name||'Project')+'</b>');
+    });
+  }
+})();
+</script>
+</body>
+</html>
