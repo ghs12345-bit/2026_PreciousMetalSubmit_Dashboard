@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Erdene Resource Development — Company Report</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    :root{--bg:#f5f6f8;--panel:#fff;--line:#e3e6ea;--ink:#1f2733;--muted:#6b7480;
+      --accent:#1f6feb;--header:#1c2534;--header-ink:#eaf0f7;}
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:-apple-system,Segoe UI,"Microsoft YaHei",Arial,sans-serif;
+      background:var(--bg);color:var(--ink);line-height:1.6;}
+    header.top{background:var(--header);color:var(--header-ink);padding:14px 22px;display:flex;
+      align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:20;}
+    header.top .cname{font-size:18px;font-weight:700;}
+    header.top .tick{background:var(--accent);color:#fff;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;}
+    header.top .meta{font-size:12px;color:#9fb0c4;}
+    header.top .wlink{color:#7fb0ff;font-size:13px;text-decoration:none;margin-left:auto;}
+    header.top .back{color:#cdd9e8;font-size:13px;text-decoration:none;margin-left:8px;}
+    .layout{display:flex;align-items:flex-start;max-width:1100px;margin:0 auto;padding:18px;}
+    nav.toc{position:sticky;top:80px;width:190px;flex:0 0 190px;align-self:flex-start;
+      background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 10px;margin-right:18px;}
+    nav.toc .tt{font-size:11px;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:4px 6px 8px;}
+    nav.toc ul{list-style:none;margin:0;padding:0;}
+    nav.toc li a{display:block;padding:6px 8px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:13px;}
+    nav.toc li a:hover{background:#eaf1fb;color:var(--accent);}
+    main{flex:1 1 auto;min-width:0;}
+    .sec{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
+    .sec-head{font-size:16px;font-weight:700;margin-bottom:10px;padding-left:12px;border-left:4px solid var(--accent);}
+    .sec-no{color:var(--accent);margin-right:8px;}
+    .sec-body{color:#2b3440;font-size:14px;}
+    .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px;}
+    .metric{background:#f3f7fd;border:1px solid #dbe7fb;border-radius:10px;padding:12px;text-align:center;}
+    .metric-label{font-size:11px;color:var(--muted);}
+    .metric-value{font-size:19px;font-weight:700;color:var(--accent);margin-top:4px;}
+    .metric-rows-card{text-align:left;}
+    .metric-rows-card .mrow{display:flex;justify-content:space-between;font-size:13px;padding:2px 4px;border-top:1px dashed #e6eefb;}
+    .metric-rows-card .mrow b{color:var(--accent);}
+    .bullets{margin:10px 0;padding:10px 14px;border-radius:8px;}
+    .bullets.hl{background:#eef6ee;} .bullets.rk{background:#fbeeec;} .bullets.ct{background:#eef3fb;}
+    .bullets-title{font-weight:700;font-size:13px;margin-bottom:6px;}
+    .bullets ul{margin:0;padding-left:18px;} .bullets li{font-size:13.5px;margin:3px 0;}
+    .bullets.plain{background:none;padding:0;}
+    .bullets.plain ul{padding-left:18px;} .bullets.plain li{font-size:14px;margin:4px 0;}
+    .sub-h{font-weight:700;font-size:13.5px;color:var(--accent);margin:12px 0 4px;}
+    .proj-list .li-row,.people-list .li-row,.ms-list .li-row{padding:6px 0;border-bottom:1px solid var(--line);font-size:14px;}
+    .tag{display:inline-block;background:#eaf1fb;color:var(--accent);font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px;}
+    .li-note{font-size:12.5px;color:var(--muted);margin-top:2px;}
+    .chart-wrap{margin:14px 0;} .chart-cap{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+    svg.chart{background:#fff;border:1px solid var(--line);border-radius:8px;width:100%;height:auto;}
+    svg.chart .cval{fill:var(--ink);font-size:11px;} svg.chart .clab{fill:var(--muted);font-size:11px;}
+    .timeline{position:relative;margin:6px 0 0 6px;padding-left:22px;}
+    .timeline:before{content:"";position:absolute;left:5px;top:4px;bottom:4px;width:2px;background:var(--accent);}
+    .tl-item{position:relative;margin-bottom:12px;}
+    .tl-dot{position:absolute;left:-22px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 0 0 2px var(--accent);}
+    .tl-date{font-size:11px;color:var(--muted);font-weight:700;}
+    .tl-body{margin-top:2px;}
+    .tl-body summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--ink);list-style:none;}
+    .tl-body summary::-webkit-details-marker{display:none;}
+    .tl-body summary:before{content:"▸ ";color:var(--accent);}
+    .tl-body[open] summary:before{content:"▾ ";}
+    .tl-sum{font-size:13px;color:#3a4452;margin:4px 0 2px;padding-left:2px;}
+    .nlink{font-size:12px;color:var(--accent);text-decoration:none;}
+    #map{height:300px;border:1px solid var(--line);border-radius:8px;}
+    .map-note{font-size:12px;color:var(--muted);padding:10px;border:1px dashed var(--line);border-radius:8px;}
+    footer.ft{background:var(--panel);border-top:1px solid var(--line);padding:14px 22px;font-size:12px;color:var(--muted);max-width:1100px;margin:0 auto;}
+    footer.ft a{color:var(--accent);text-decoration:none;}
+    @media(max-width:760px){nav.toc{display:none;}.layout{padding:10px;}}
+    </style>
+</head>
+<body>
+<header class="top">
+  <span class="cname">Erdene Resource Development</span>
+  <span class="tick">TSX: ERD</span>
+  <span class="meta">Gold, Silver, Copper, Molybdenum &middot; Production (Bayan Khundii) / Development &middot; Mongolia</span>
+  <a class="wlink" href="https://erdene.com" target="_blank" rel="noopener">&#8599; website</a>
+  <a class="back" href="../index.html">&larr; Dashboard</a>
+</header>
+<div class="layout">
+  <nav class="toc"><div class="tt">CONTENTS</div><ul><li><a href="#summary">Executive Summary</a></li><li><a href="#map">Project Map</a></li><li><a href="#overview">Overview</a></li><li><a href="#assets">Core Assets</a></li><li><a href="#financials">Financials</a></li><li><a href="#management">Management</a></li><li><a href="#profile">Company Profile</a></li><li><a href="#news">Latest News</a></li></ul></nav>
+  <main>
+    <section id="summary" class="sec">
+      <div class="sec-head"><span class="sec-no">&#9733;</span>Executive Summary</div>
+      <div class="sec-body"><div class="metric-grid">
+<div class="metric"><div class="metric-label">Commodity</div><div class="metric-value">Gold (Ag, Cu, Mo)</div></div>
+<div class="metric"><div class="metric-label">Exchange</div><div class="metric-value">TSX: ERD</div></div>
+<div class="metric"><div class="metric-label">Stage</div><div class="metric-value">Producer / Developer</div></div>
+<div class="metric metric-rows-card"><div class="metric-label">Core Resources</div><div class="mrow"><span>BK Reserves</span><b>513,700 oz @ 4.0 g/t</b></div><div class="mrow"><span>BK M&amp;I Au</span><b>613 Koz</b></div><div class="mrow"><span>Dark Horse</span><b>62 Koz Ind</b></div></div>
+<div class="metric"><div class="metric-label">Annual Output</div><div class="metric-value">~85,000 oz Au/yr</div></div>
+<div class="metric"><div class="metric-label">Country</div><div class="metric-value">Mongolia</div></div>
+</div><div class="bullets hl"><div class="bullets-title">Investment highlights</div><ul><li>High-grade, low-cost gold producer: Bayan Khundii achieved commercial production in Q1 2026 — one of the highest-grade open-pit gold mines globally (reserves 513,700 oz @ 4.0 g/t; ~85,000 oz/yr).</li><li>Prolific Khundii Minerals District in SW Mongolia with multiple deposits (Bayan Khundii, Altan Nar, Dark Horse, Zuun Mod Mo-Cu) offering district-scale growth.</li><li>Q2 2026 the JV sold 11,709 oz gold at US$4,493/oz; quarterly feed grade 2.4 g/t, production ramping after first gold (Q3 2025).</li><li>Strong exploration upside: near-surface high-grade intercepts outside the modelled orebody and a 20 km² Dark Horse prospect area.</li><li>Strategic JV with Mongolian Mining Corporation (MMC); gold sold to Mongolia&#x27;s Central Bank, supporting national FX reserves.</li></ul></div><div class="bullets rk"><div class="bullets-title">Key risks</div><ul><li>Single-mine producer in early production ramp-up; throughput and grade reconciliation risk.</li><li>Jurisdiction risk: Mongolia permitting, royalty/profit-share regime and political considerations.</li><li>1% NSR to Sandstorm Gold plus first-400,000-oz bonus clauses dilute mine economics.</li><li>Remote SW Mongolia logistics; reliance on MMC JV partner and Central Bank offtake.</li><li>Gold price and FX exposure; limited operating history at nameplate scale.</li></ul></div><div class="bullets ct"><div class="bullets-title">Near-term catalysts</div><ul><li>Continued production ramp and grade/throughput improvements at Bayan Khundii through 2026.</li><li>Resource-expansion drilling at Bayan Khundii / Dark Horse extending mine life.</li><li>Advancement of Altan Nar (Au-Ag-Pb-Zn) and Zuun Mod (Mo-Cu) toward development.</li><li>New district discoveries along the Trans Altai Terrane.</li><li>Potential restructuring/monetization of the MMC JV or additional strategic funding.</li></ul></div></div>
+    </section>
+    <section id="map" class="sec">
+      <div class="sec-head"><span class="sec-no">&bull;</span>Project Map</div>
+      <div class="sec-body"><div id="map"></div></div>
+    </section>
+    <section id="overview" class="sec"><div class="sec-head"><span class="sec-no">1</span>Overview</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Erdene is a Mongolia-focused gold producer and explorer that transitioned from greenfield discovery to production in ~10 years, with first gold at Bayan Khundii in Q3 2025 and commercial production in Q1 2026.</li><li>Flagship Bayan Khundii is a near-surface, high-grade open-pit mine in the Khundii Minerals District; the Company is expanding resources and exploring satellite/deposit upside.</li><li>Strategy: build a long-life gold district while harvesting cash flow from Bayan Khundii to fund organic exploration.</li></ul></div><div class="sub-h">Investment thesis</div><div class="bullets plain"><div class="bullets-title"></div><ul><li>One of the highest-grade open-pit gold mines globally</li><li>District-scale land package in a proven orogenic/gold belt</li><li>Production cash flow funds organic exploration growth</li></ul></div></div></section>
+    <section id="assets" class="sec"><div class="sec-head"><span class="sec-no">2</span>Core Assets</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Bayan Khundii Gold Deposit: M&amp;I resource 7.4 Mt @ 2.58 g/t Au = 613 Koz Au + 319 Koz Ag; mine reserves 513,700 oz @ 4.0 g/t incl. Dark Horse; ~85,000 oz/yr. [NI 43-101 FS Update 2023, authoritative]</li><li>Dark Horse: Indicated 682 Kt @ 2.8 g/t = 61.7 Koz plus 6.8 Koz inferred; 20 km² greater prospect area.</li><li>Altan Nar: gold-polymetallic (Au-Ag-Pb-Zn), Indicated resource per RPM 2018 (0.7/1.4 g/t AuEq cut-offs); 16 of 18 targets untested.</li><li>Zuun Mod: Mo-Cu porphyry — the 4th resource in the district; 2025 technical report.</li><li>Cross-check: CR headline reserves (513,700 oz @ 4.0 g/t) align with the NI 43-101 FS (2023); deck and FS figures are consistent.</li></ul></div><div class="proj-list">
+<div class='li-row'><b>Bayan Khundii</b><div class="li-note">513,700 oz reserves @ 4.0 g/t; commercial production Q1 2026</div></div>
+<div class='li-row'><b>Dark Horse</b><div class="li-note">61.7 Koz Ind; 20 km² prospect area</div></div>
+<div class='li-row'><b>Altan Nar</b><div class="li-note">Au-Ag-Pb-Zn; 16/18 targets untested</div></div>
+<div class='li-row'><b>Zuun Mod</b><div class="li-note">Mo-Cu porphyry, 4th district resource</div></div>
+</div><div class="chart-wrap"><div class="chart-cap">Contained metal by project</div><svg viewBox="0 0 680 300" width="100%" class="chart">
+<line x1="55" y1="20" x2="55" y2="244" stroke="#e3e6ea"/>
+<line x1="55" y1="244" x2="660" y2="244" stroke="#e3e6ea"/>
+<rect x="157.9" y="73.4" width="131.1" height="170.6" rx="3" fill="#1f6feb"/>
+<text x="224.4" y="68.4" text-anchor="middle" class="cval">514</text>
+<text x="224.4" y="258" text-anchor="middle" class="clab">Reserves</text>
+<rect x="291.0" y="20.0" width="131.1" height="224.0" rx="3" fill="#27ae60"/>
+<text x="357.5" y="15.0" text-anchor="middle" class="cval">675</text>
+<text x="357.5" y="258" text-anchor="middle" class="clab">M&amp;I Resource</text>
+<rect x="424.1" y="223.4" width="131.1" height="20.6" rx="3" fill="#e67e22"/>
+<text x="490.6" y="218.4" text-anchor="middle" class="cval">62</text>
+<text x="490.6" y="258" text-anchor="middle" class="clab">Dark Horse Ind</text>
+<text x="357.5" y="276" text-anchor="middle" class="clab" font-weight="700">Khundii District Gold (Koz)</text>
+</svg></div></div></section>
+    <section id="financials" class="sec"><div class="sec-head"><span class="sec-no">3</span>Financials &amp;amp; Capital Structure</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Cash and cash equivalents ~CAD 27.8M at Q2 2026 (down from ~CAD 56M at FY2025 as the mine was commissioned); MD&amp;A, objective.</li><li>Q2 2026 the Erdene Mongol JV sold 11,709 oz gold and 3,317 oz silver at avg US$4,493/oz and US$72/oz; quarterly feed grade 2.4 g/t, ~25% above Q1 2026.</li><li>Commercial production achieved Q1 2026; output ramping toward nameplate ~85,000 oz/yr.</li><li>Capital structure: share consolidation implemented Sept 2025 (shares retrospectively adjusted); detailed cap-table not in reviewed filings.</li><li>Mine carries a 1.0% NSR in favour of Sandstorm Gold; upside profit-share on first 400,000 oz.</li></ul></div><div class="chart-wrap"><div class="chart-cap">Shareholder structure</div></div></div></section>
+    <section id="management" class="sec"><div class="sec-head"><span class="sec-no">4</span>Management &amp;amp; Board</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>Led by President &amp; CEO Peter C. Akerley (geologist, founder; steered discovery of Bayan Khundii and Altan Nar) and CFO Robert Jenkins (ex-Brookfield).</li><li>Board chaired by T. Layton Croft (ex-Ivanhoe/Rio Tinto, Mongolia veteran); Bilguun Ankhbayar leads operating JV Erdene Mongol LLC.</li></ul></div><div class="people-list">
+<div class='li-row'><b>Peter C. Akerley</b> <span class="tag">President &amp; CEO</span></div>
+<div class='li-row'><b>Robert Jenkins</b> <span class="tag">CFO</span></div>
+<div class='li-row'><b>T. Layton Croft</b> <span class="tag">Chairman</span></div>
+<div class='li-row'><b>Bilguun Ankhbayar</b> <span class="tag">CEO, Erdene Mongol LLC</span></div>
+</div></div></section>
+    <section id="profile" class="sec"><div class="sec-head"><span class="sec-no">5</span>Company Profile</div><div class="sec-body"><div class="bullets plain"><div class="bullets-title"></div><ul><li>From a 2015 greenfield discovery in the &#x27;Rich Valley&#x27; to Mongolia&#x27;s newest high-grade gold mine in ~10 years — one of the industry&#x27;s faster transitions.</li><li>Built a district-scale position in the Khundii Minerals District and is now pivoting from explorer to cash-generative producer.</li></ul></div><div class="ms-list">
+<div class='li-row'><b>2015</b> &mdash; Greenfield gold discovery (Bayan Khundii)</div>
+<div class='li-row'><b>2019</b> &mdash; Secured Bayan Khundii mining license</div>
+<div class='li-row'><b>2023</b> &mdash; NI 43-101 FS / reserves (513,700 oz @ 4.0 g/t)</div>
+<div class='li-row'><b>2025-Q3</b> &mdash; First gold pour at Bayan Khundii</div>
+<div class='li-row'><b>2026-Q1</b> &mdash; Commercial production achieved</div>
+</div></div></section>
+    <section id="news" class="sec"><div class="sec-head"><span class="sec-no">6</span>Latest News</div><div class="sec-body"><div class="timeline">
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-08-14</div><details class="tl-body"><summary>Erdene Announces Q2 2026 Results</summary><div class="tl-sum">Reported Q2 output of 11,709 oz gold at US$4,493/oz and continued ramp at Bayan Khundii; cash ~CAD 27.8M. <a href="https://erdene.com/erdene-announces-q2-2026-results/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-07-22</div><details class="tl-body"><summary>Q2 2026 Bayan Khundii Mine Update</summary><div class="tl-sum">Provided mine update ahead of results; flagged ramping throughput and near-surface high-grade exploration intercepts. <a href="https://erdene.com/investor-hub/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-06-26</div><details class="tl-body"><summary>Intention to Launch Normal Course Issuer Bid</summary><div class="tl-sum">Signalled a NCIB to return value to shareholders as the company enters production cash flow. <a href="https://erdene.com/investor-hub/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2026-05-27</div><details class="tl-body"><summary>Letter to Shareholders 2026</summary><div class="tl-sum">CEO described the past year as transformative — realizing the vision of a high-grade gold mine in SW Mongolia. <a href="https://erdene.com/investor-hub/" target="_blank" rel="noopener" class="nlink">&#8599; source</a></div></details></div>
+</div></div></section>
+  </main>
+</div>
+<footer class="ft">
+  Source: official website &middot; AI interpretation of public filings (figures cited from source) &middot;
+  Generated 2026-08-25 &middot; Mineral resources are not mineral reserves and have not demonstrated economic viability
+  (NI 43-101). &middot; <a href="../index.html">&larr; Back to Dashboard</a>
+</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  var mines = [{"name": "Khatsavch", "lat": 42.70028, "lng": 106.83507}, {"name": "Khundii", "lat": 43.90224, "lng": 98.79127}, {"name": "Nomin Tal", "lat": 44.07444, "lng": 98.74194}, {"name": "Zuun Mod", "lat": 43.9806, "lng": 99.20846}];
+  var arr = Array.isArray(mines) ? mines : (mines ? [mines] : []);
+  if(arr.length){
+    var map = L.map('map').setView([arr[0].lat, arr[0].lng], 5);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:16, attribution:'Tiles &copy; Esri'}).addTo(map);
+    arr.forEach(function(m){
+      L.circleMarker([m.lat, m.lng], {radius:8, color:'#1f6feb', fillColor:'#1f6feb', fillOpacity:.85})
+        .addTo(map).bindPopup('<b>'+(m.name||'Project')+'</b>');
+    });
+  }
+})();
+</script>
+</body>
+</html>
